@@ -1,0 +1,10 @@
+# Normalize line endings: LF in the repository, native in the working copy.
+# Dev machine is Windows, CI runs Linux — without this, diffs fill with noise.
+* text=auto eol=lf
+
+# Binary assets must never be munged.
+*.ico binary
+*.png binary
+*.jpg binary
+*.webp binary
+*.woff2 binary
