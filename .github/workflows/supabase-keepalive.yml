@@ -1,0 +1,45 @@
+name: Supabase keep-alive
+
+# Supabase's free Postgres tier pauses a project after roughly a week of
+# inactivity (PLAN.md §3, gotcha 1). A weekly request keeps it warm so the
+# database is never found paused at the start of a session.
+on:
+  schedule:
+    # Every Monday at 06:00 UTC. GitHub may delay scheduled runs under load;
+    # weekly-with-slack is well inside the pause window.
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    name: ping REST endpoint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Ping Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${SUPABASE_URL}" ] || [ -z "${SUPABASE_ANON_KEY}" ]; then
+            echo "::error::Supabase secrets are not set on this repository."
+            echo "Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY"
+            echo "under Settings -> Secrets and variables -> Actions."
+            exit 1
+          fi
+
+          status=$(curl --silent --show-error --location \
+            --max-time 30 \
+            --output /dev/null \
+            --write-out '%{http_code}' \
+            --header "apikey: ${SUPABASE_ANON_KEY}" \
+            "${SUPABASE_URL}/rest/v1/")
+
+          echo "Supabase responded with HTTP ${status}"
+
+          if [ "${status}" != "200" ]; then
+            echo "::error::Expected HTTP 200. The project may be paused or the key rotated."
+            exit 1
+          fi
