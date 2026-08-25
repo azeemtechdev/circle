@@ -11,6 +11,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:smoke": "vitest run tests/supabase.smoke.test.ts",
+    "test:ledger": "vitest run tests/ledger src/lib/money.test.ts",
+    "reconcile": "node --experimental-strip-types --env-file-if-exists=.env.local scripts/reconcile.ts",
     "verify": "npm run lint && npm run typecheck && npm run test"
   },
   "dependencies": {
@@ -20,6 +22,7 @@
     "react-dom": "19.2.8"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.7",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
