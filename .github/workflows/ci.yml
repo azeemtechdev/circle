@@ -18,9 +18,14 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      # Must match the dev machine's major. package-lock.json is written by
+      # npm 11 (Node 24); npm 10 (which Node 22 bundles) rejects it with
+      # "Missing: @emnapi/runtime@1.11.3 from lock file" — npm omits some
+      # transitive deps of the wasm32-wasi optional packages that older npm
+      # then insists on. Pinning the major keeps `npm ci` deterministic.
       - uses: actions/setup-node@v5
         with:
-          node-version: 22.x
+          node-version: 24.x
           cache: npm
 
       # Printed before install so a failing run says which toolchain produced it.
