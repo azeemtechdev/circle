@@ -1,6 +1,6 @@
 # Phase 00 — Skeleton & guardrails
-Status: in progress
-Started: 2026-08-24   Completed: —
+Status: done
+Started: 2026-08-24   Completed: 2026-08-25
 
 ## Goal
 (from PLAN.md §7, Phase 0)
@@ -8,6 +8,20 @@ Started: 2026-08-24   Completed: —
 - Next.js app scaffold, Supabase project connected, CI running lint + typecheck + tests
 - `docs/phases/` structure created; PLAN.md, ARCHITECTURE.md, CLAUDE.md committed
 - **Accept:** deployed "hello" page on Vercel; CI green; Supabase reachable from a test.
+
+## Acceptance — all criteria met 2026-08-25
+
+| Criterion | Evidence |
+|---|---|
+| Deployed "hello" page on Vercel | <https://circle-ibrahim-azeems-projects.vercel.app> — fetched anonymously after Deployment Protection was disabled; serves `<title>Circle</title>` and the hello copy |
+| CI green | Run on `ee03f03`: install, lint, typecheck, tests all `success`, none skipped |
+| Supabase reachable from a test | `npm run test:smoke` → 2 passed against the live project (`/auth/v1/health` 200; `PGRST205` round-trip) |
+| `docs/phases/` created; PLAN / ARCHITECTURE / CLAUDE committed | This file, `docs/PLAN.md`, `docs/ARCHITECTURE.md`, `CLAUDE.md` |
+
+Took three red CI runs to get there. Each failure is written up below rather
+than smoothed over — the install desync, the generated-types false green, and
+two wrong assumptions about the Supabase REST API that the first real
+connection exposed.
 
 ## What was built
 
@@ -119,9 +133,10 @@ Supabase is *un*configured.
 
 - [x] ~~Supabase project not created~~ — created 2026-08-25, keys in `.env.local`, `npm run test:smoke` passes against the live project. Acceptance criterion "Supabase reachable from a test" **met**.
 - [x] ~~Not deployed to Vercel~~ — deployed 2026-08-25 and publicly reachable at <https://circle-ibrahim-azeems-projects.vercel.app> after Deployment Protection was switched off. Verified by fetching the page anonymously: it serves the Circle hello content. Acceptance criterion **met**.
-- [ ] **CI not yet green** — `npm ci` failed on both pushes; the lockfile has been repaired and the Node major pinned, but the fix is committed locally and **not pushed**, so it is unproven on the runner. This is the last open Phase 0 gate.
+- [x] ~~CI not yet green~~ — green on `ee03f03` (2026-08-25). All steps succeeded, none skipped.
 - [x] ~~Repository secrets~~ — added 2026-08-25; the keep-alive Action succeeded on manual dispatch, which confirms both secrets resolve and the `/auth/v1/health` fix works against the live project.
 - [ ] Lockfile fragility: npm on Windows can emit a lockfile missing transitive deps of the `wasm32-wasi` optional packages. If `npm ci` ever fails again with `Missing: @emnapi/… from lock file`, regenerate with `npm install --package-lock-only` and diff before committing.
 - [ ] `git remote` still points at `circle-.git` (the repo was renamed to `circle`); it works via redirect. Tidy with `git remote set-url origin https://github.com/azeemtechdev/circle.git`.
+- [ ] The Supabase smoke test's behaviour **inside CI** is inferred, not observed: repository secrets demonstrably resolve (the keep-alive Action succeeded using the same two names), so the suite should be running rather than skipping there — but Actions logs need auth to read, so this has not been confirmed directly. If it were silently skipping, CI would still be green.
 - [ ] No `supabase/migrations/` directory yet — created in Phase 1 with the first schema migration.
 - [ ] Tailwind v4 is installed by the scaffold and unused beyond the hello page; the real design pass is Phase 3.

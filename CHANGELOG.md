@@ -6,6 +6,7 @@ One line per meaningful change, newest first.
 
 ## Unreleased
 
+- `phase-0` — **Phase 0 complete**: CI green on `ee03f03`, hello page live on Vercel, Supabase reachable from a test
 - `phase-0` — Fix: `typecheck` now runs `next typegen` first — Next 16's generated `LayoutProps` global lives in gitignored `.next/`, so CI failed with TS2304 while local passed on build residue
 - `phase-0` — Fix: `npm ci` failed in CI — regenerated `package-lock.json` to include the missing `@emnapi/*` wasm32-wasi entries, and pinned CI to Node 24.x to match the dev machine
 - `phase-0` — CI actions bumped to `checkout@v5` / `setup-node@v5` (v4 was deprecated and force-run on Node 24); toolchain versions now printed before install
