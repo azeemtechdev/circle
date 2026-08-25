@@ -128,7 +128,11 @@ describe('invariant 2 — append-only', () => {
       expect(row.can_delete, `${row.role} must not DELETE`).toBe(false);
       // Writes go through post_double_entry, never direct INSERT.
       expect(row.can_insert, `${row.role} must not INSERT directly`).toBe(false);
-      expect(row.can_select, `${row.role} may read`).toBe(true);
+      // Migration 0002 took SELECT away from anon: an anonymous request could
+      // otherwise read every circle's full financial history. Row Level
+      // Security will scope member reads once `memberships` exists (Phase 2).
+      // See tests/ledger/grants.test.ts for the full read-grant matrix.
+      expect(row.can_select, `${row.role} read access`).toBe(row.role !== 'anon');
     }
   });
 });
