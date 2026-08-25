@@ -1,6 +1,8 @@
 {
   "compilerOptions": {
-    "target": "ES2017",
+    // ES2020 or later is required for BigInt literals (10n). Money is integer
+    // kobo held as bigint, so this is not optional — see src/lib/money.ts.
+    "target": "ES2022",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
@@ -10,6 +12,10 @@
     "esModuleInterop": true,
     "module": "esnext",
     "moduleResolution": "bundler",
+    // `scripts/reconcile.ts` and the ledger modules it pulls in are executed by
+    // Node directly, whose ESM resolver requires an explicit file extension.
+    // Safe here because nothing is emitted (`noEmit`).
+    "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "react-jsx",
