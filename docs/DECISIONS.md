@@ -4,6 +4,12 @@ Newest first. Three lines each: **Context** (what forced a choice) / **Decision*
 
 ---
 
+## 2026-08-25 — ADR-0010: Repair the incomplete lockfile, and align CI's Node with the dev machine
+
+- **Context:** CI failed at `npm ci` on every push with `EUSAGE … Missing: @emnapi/runtime@1.11.3 from lock file`. The committed lockfile listed `@tailwindcss/oxide-wasm32-wasi` as depending on `@emnapi/core` / `@emnapi/runtime` but carried no top-level entries for them — a genuinely incomplete lockfile, produced by npm 11 on Windows. npm 11 tolerates the gap; npm 10, which Node 22 bundles and which CI was pinned to, correctly refuses.
+- **Decision:** Regenerate `package-lock.json` (`npm install --package-lock-only`), which adds the eight missing wasm32-wasi entries; the only other change across 513 packages was an `electron-to-chromium` patch bump, so no real dependency drift. Additionally pin CI to `node-version: 24.x` to match the dev machine, because a runner on a different npm major is a difference the test suite cannot see.
+- **Consequence:** The lockfile is now valid for npm 10 and npm 11 alike, so the failure cannot recur simply by changing runner versions, and the Node pin removes a whole class of "works locally" divergence. The residual risk is that npm can re-emit an incomplete lockfile after a future dependency change on Windows; the phase log records the symptom so it is recognised in seconds rather than debugged from scratch.
+
 ## 2026-08-25 — ADR-0009: Malformed config throws; only absent config is silent
 
 - **Context:** `NEXT_PUBLIC_SUPABASE_URL` was pasted as the REST endpoint (`https://….supabase.co/rest/v1/`). supabase-js appends `/rest/v1` itself, so every request hit `/rest/v1//rest/v1/` and returned `PGRST125 Invalid path specified in request URL` — a message that names nothing the reader controls.

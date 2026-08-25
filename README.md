@@ -35,6 +35,9 @@ Every layer is on a free tier. Nothing here costs money to run.
 
 ## Getting started
 
+Requires **Node 24** (npm 11). CI is pinned to the same major on purpose — a
+runner on a different npm major is a difference the test suite cannot see.
+
 ```bash
 npm install
 cp .env.example .env.local     # then paste your Supabase keys in
