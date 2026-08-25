@@ -30,12 +30,16 @@ jobs:
             exit 1
           fi
 
+          # /auth/v1/health is the only liveness endpoint the anon key may call;
+          # /rest/v1/ is service_role-only and answers 401 to an anon key.
+          # TODO(phase-1): once a table exists, SELECT from it instead — a health
+          # check proves the project is up but may not count as Postgres activity.
           status=$(curl --silent --show-error --location \
             --max-time 30 \
             --output /dev/null \
             --write-out '%{http_code}' \
             --header "apikey: ${SUPABASE_ANON_KEY}" \
-            "${SUPABASE_URL}/rest/v1/")
+            "${SUPABASE_URL%/}/auth/v1/health")
 
           echo "Supabase responded with HTTP ${status}"
 

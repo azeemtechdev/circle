@@ -14,31 +14,33 @@ import { createSupabaseClient } from '@/lib/supabase/client';
 const env = readSupabaseEnv();
 
 describe.skipIf(env === null)('Supabase connection smoke test', () => {
-  it('answers the REST endpoint with the anon key', async () => {
+  it('reaches the auth service', async () => {
     // Non-null: describe.skipIf guarantees env is set inside this block.
     const { url, anonKey } = env!;
 
-    const response = await fetch(`${url}/rest/v1/`, {
-      headers: { apikey: anonKey, Authorization: `Bearer ${anonKey}` },
+    // /auth/v1/health is the only liveness endpoint an anon key may call.
+    // (/rest/v1/ itself is service_role-only and answers 401 to the anon key.)
+    const response = await fetch(`${url}/auth/v1/health`, {
+      headers: { apikey: anonKey },
     });
 
-    expect(response.ok).toBe(true);
+    expect(response.status).toBe(200);
   });
 
   it('round-trips a query through supabase-js', async () => {
     const supabase = createSupabaseClient();
 
     // No tables exist yet (schema lands in Phase 1), so we deliberately query a
-    // table that will never exist. PostgREST replying `42P01 undefined_table`
-    // proves three things at once: the host resolved, PostgREST is running, and
-    // the anon key was accepted. A bad key would fail with 401 instead.
+    // table that will never exist. PostgREST replying PGRST205 proves three
+    // things at once: the host resolved, PostgREST is running, and the anon key
+    // was accepted — a rejected key returns 401 "Invalid API key" instead.
     const { data, error } = await supabase
       .from('__circle_connection_smoke_test')
       .select('*')
       .limit(1);
 
     expect(data).toBeNull();
-    expect(error?.code).toBe('42P01');
+    expect(error?.code).toBe('PGRST205');
   });
 });
 
