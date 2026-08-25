@@ -66,6 +66,7 @@ Docs
 ## How to test
 
 ```bash
+rm -rf .next          # do this first — build residue can hide a CI-only failure
 npm run verify        # lint + typecheck + tests, the same chain CI runs
 npm run lint
 npm run typecheck
@@ -98,6 +99,12 @@ Supabase is *un*configured.
   - *Fix.* Corrected the URL in `.env.local`. Replaced the REST-root probe with `GET /auth/v1/health` (the one liveness endpoint an anon key may call) and changed the expected error code to `PGRST205`. Both replacements were verified against the live project before being written, including that a deliberately bad key returns 401 `Invalid API key` — so the `PGRST205` assertion really does prove key acceptance.
   - *Regression tests.* `src/lib/env.test.ts` — `rejects a URL that already includes the REST path`, plus `strips a trailing slash from the project URL`, `rejects a URL that is not parseable`, `rejects a remote URL served over http`, `accepts a local supabase stack over http`, `trims surrounding whitespace from both values`, `rejects an anon key containing inner whitespace`.
   - *Design change it forced.* `readSupabaseEnv` used to return `null` for anything it disliked, so a typo'd URL would have made the smoke test **skip** and read as "not set up yet". It now returns `null` only for absent/placeholder values and throws — naming the exact edit — for malformed ones. See ADR-0009.
+
+- **CI failed at typecheck once install was fixed:** `src/app/layout.tsx(20,50): error TS2304: Cannot find name 'LayoutProps'.`
+  - *Root cause.* `LayoutProps<"/">` is one of Next 16's **generated** route-type globals (`PageProps`, `LayoutProps`, `RouteContext`), emitted into `.next/types/` by `next dev`, `next build` or `next typegen`. `.next/` is gitignored, so CI had no route types. It passed locally only because an earlier `npm run build` had left `.next/` on disk — a false green produced by build residue.
+  - *Fix.* `typecheck` is now `next typegen && tsc --noEmit`. `next typegen` generates the route types without a full build, which is exactly this case; confirmed against `node_modules/next/dist/docs/01-app/03-api-reference/05-config/02-typescript.md`.
+  - *Reproduced first.* `rm -rf .next && npm run typecheck` reproduced the CI error verbatim before the fix, and passes after. `npm run verify` was then re-run from a clean tree — the state CI actually starts from.
+  - *Lesson recorded.* Any check that depends on generated artefacts must generate them itself, or CI and local disagree. Verify locally with `rm -rf .next` when touching the typecheck path.
 
 - **CI failed at `npm ci` on every push.** Symptom: `npm error code EUSAGE … Missing: @emnapi/runtime@1.11.3 from lock file`, `Missing: @emnapi/core@1.11.3 from lock file`.
   - *Root cause.* `package-lock.json` was written by npm 11.6.2 (Node 24, the dev machine). It records `@tailwindcss/oxide-wasm32-wasi` as depending on `@emnapi/core` and `@emnapi/runtime`, but has no top-level entries for them — only copies nested under `@unrs/resolver-binding-wasm32-wasi` at a different version (1.10.0). npm 11 tolerates that gap; npm 10, which Node 22 bundles and which CI was pinned to, treats it as a lockfile desync and refuses to install.
