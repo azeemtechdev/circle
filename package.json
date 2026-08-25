@@ -12,7 +12,7 @@
     "test:watch": "vitest",
     "test:smoke": "vitest run tests/supabase.smoke.test.ts",
     "test:ledger": "vitest run tests/ledger src/lib/money.test.ts",
-    "reconcile": "node --experimental-strip-types --env-file-if-exists=.env.local scripts/reconcile.ts",
+    "reconcile": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --env-file-if-exists=.env.local scripts/reconcile.mts",
     "lockfile:check": "npm ci --dry-run --no-audit --no-fund",
     "verify": "npm run lockfile:check && npm run lint && npm run typecheck && npm run test"
   },

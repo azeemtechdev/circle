@@ -13,7 +13,11 @@
  * to anon — an anonymous visitor has no business auditing the books.
  *
  * Run with Node's TypeScript support:
- *   node --experimental-strip-types scripts/reconcile.ts
+ *   node --experimental-strip-types scripts/reconcile.mts
+ *
+ * The .mts extension marks this as ESM explicitly. Adding "type": "module" to
+ * package.json would do the same, but that flips module resolution for the
+ * whole Next.js app to settle a warning in one script.
  */
 
 import { createClient } from '@supabase/supabase-js';
