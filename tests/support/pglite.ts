@@ -39,23 +39,57 @@ export async function createTestDb(): Promise<TestDb> {
   return db;
 }
 
-/** Inserts a circle's accounts: one per member plus the clearing account. */
+/**
+ * Seeds a circle with real rows and returns its accounts: one per member plus
+ * the clearing account.
+ *
+ * Since migration 0003 gave `accounts` foreign keys onto `circles` and
+ * `memberships`, the circle and its memberships have to genuinely exist — a
+ * fabricated uuid is rejected, which is the point of the constraint.
+ *
+ * This writes the rows directly rather than going through create_circle /
+ * invite_member on purpose: these are the *ledger* fixtures, and they should
+ * not depend on the Phase 2 state machine being correct.
+ */
 export async function seedCircleAccounts(
   db: TestDb,
   memberCount: number,
-): Promise<{ circleId: string; memberAccountIds: string[]; clearingAccountId: string }> {
-  const circle = await db.query<{ circle_id: string }>('select gen_random_uuid() as circle_id');
-  const circleId = circle.rows[0]!.circle_id;
+): Promise<{
+  circleId: string;
+  membershipIds: string[];
+  memberAccountIds: string[];
+  clearingAccountId: string;
+}> {
+  const circle = await db.query<{ id: string }>(
+    `insert into circles (name, amount_kobo, period_days, member_target)
+     values ('ledger fixture', 100000, 30, $1)
+     returning id`,
+    // member_target has a CHECK of 2..50; ledger fixtures sometimes want one
+    // account, which is fine — nothing here activates the circle.
+    [Math.min(50, Math.max(2, memberCount))],
+  );
+  const circleId = circle.rows[0]!.id;
 
+  const membershipIds: string[] = [];
   const memberAccountIds: string[] = [];
+
   for (let i = 0; i < memberCount; i += 1) {
-    const inserted = await db.query<{ id: string }>(
-      `insert into accounts (circle_id, membership_id, kind)
-       values ($1, gen_random_uuid(), 'member')
+    const membership = await db.query<{ id: string }>(
+      `insert into memberships (circle_id, user_id, payout_position, status)
+       values ($1, gen_random_uuid(), $2, 'joined')
        returning id`,
-      [circleId],
+      [circleId, i + 1],
     );
-    memberAccountIds.push(inserted.rows[0]!.id);
+    const membershipId = membership.rows[0]!.id;
+    membershipIds.push(membershipId);
+
+    const account = await db.query<{ id: string }>(
+      `insert into accounts (circle_id, membership_id, kind)
+       values ($1, $2, 'member')
+       returning id`,
+      [circleId, membershipId],
+    );
+    memberAccountIds.push(account.rows[0]!.id);
   }
 
   const clearing = await db.query<{ id: string }>(
@@ -65,7 +99,7 @@ export async function seedCircleAccounts(
     [circleId],
   );
 
-  return { circleId, memberAccountIds, clearingAccountId: clearing.rows[0]!.id };
+  return { circleId, membershipIds, memberAccountIds, clearingAccountId: clearing.rows[0]!.id };
 }
 
 /**

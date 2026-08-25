@@ -3,7 +3,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { Ledger } from '@/lib/ledger/ledger';
 import { nairaToKobo } from '@/lib/money';
 
-import { createTestDb, ledgerNet, type TestDb } from '../support/pglite';
+import { createTestDb, ledgerNet, seedCircleAccounts, type TestDb } from '../support/pglite';
 import { PgliteLedgerPort } from '../support/pglite-port';
 
 /**
@@ -35,25 +35,10 @@ describe('a full 5-member circle rotation', () => {
     ledger = new Ledger(new PgliteLedgerPort(db));
     netAfterEveryPosting = [];
 
-    const circle = await db.query<{ id: string }>('select gen_random_uuid() as id');
-    circleId = circle.rows[0]!.id;
-
-    memberAccountIds = [];
-    for (let position = 0; position < MEMBER_COUNT; position += 1) {
-      const inserted = await db.query<{ id: string }>(
-        `insert into accounts (circle_id, membership_id, kind)
-         values ($1, gen_random_uuid(), 'member') returning id`,
-        [circleId],
-      );
-      memberAccountIds.push(inserted.rows[0]!.id);
-    }
-
-    const clearing = await db.query<{ id: string }>(
-      `insert into accounts (circle_id, membership_id, kind)
-       values ($1, null, 'clearing') returning id`,
-      [circleId],
-    );
-    clearingAccountId = clearing.rows[0]!.id;
+    const seeded = await seedCircleAccounts(db, MEMBER_COUNT);
+    circleId = seeded.circleId;
+    memberAccountIds = seeded.memberAccountIds;
+    clearingAccountId = seeded.clearingAccountId;
 
     // Run the rotation. Round N pays out to the member at position N.
     for (let round = 0; round < MEMBER_COUNT; round += 1) {
