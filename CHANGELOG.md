@@ -6,6 +6,9 @@ One line per meaningful change, newest first.
 
 ## Unreleased
 
+- `phase-0` — Fix: keep-alive Action pinged `/rest/v1/`, which rejects the anon key with 401; it now pings `/auth/v1/health`
+- `phase-0` — Fix: smoke test asserted `42P01` and a 200 from `/rest/v1/`; both were wrong — now `PGRST205` and `/auth/v1/health`
+- `phase-0` — Env config validates and normalizes the Supabase URL; malformed values throw with the exact fix instead of silently reading as unconfigured
 - `phase-0` — Documentation skeleton: `docs/phases/PHASE-00.md`, `docs/DECISIONS.md`, `CHANGELOG.md`, project `README.md`
 - `phase-0` — Weekly Supabase keep-alive GitHub Action so the free tier never pauses
 - `phase-0` — CI workflow running lint + typecheck + tests on every push and pull request

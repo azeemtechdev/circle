@@ -115,6 +115,7 @@ These are the rules that make this project resume-worthy. Every one gets automat
 - Property tests: ledger always sums to zero; append-only enforced (DB-level: no UPDATE/DELETE grants on ledger_entries)
 - Reconciliation job v1 (runs locally + via GitHub Action)
 - **Accept:** simulate a full 5-member circle rotation in a test with fake entries; all invariants hold; reconciliation passes.
+- TODO (carried from Phase 0): switch `.github/workflows/supabase-keepalive.yml` from the `/auth/v1/health` ping to a real `SELECT` once a table exists — a health check proves the project is up but may not register as Postgres activity for pause detection.
 
 ### Phase 2 — Circle lifecycle & state machines (Weeks 2–3, overlaps 1)
 - circles, memberships, rounds, contributions tables + state machines

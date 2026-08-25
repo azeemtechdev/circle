@@ -80,12 +80,20 @@ Three things cannot be done from the command line. Do them in this order.
    NEXT_PUBLIC_SUPABASE_URL=https://abcdefgh.supabase.co
    NEXT_PUBLIC_SUPABASE_ANON_KEY=<the anon key>
    ```
+   **The URL is the bare project origin — no path.** The dashboard also shows a
+   REST endpoint ending in `/rest/v1/`; that one is wrong here, because
+   supabase-js appends `/rest/v1` itself and the doubled path fails every request
+   with `PGRST125 Invalid path specified in request URL`. The env loader rejects
+   it by name if you paste it anyway.
 7. Prove it works:
    ```bash
    npm run test:smoke
    ```
-   Expected: **2 passed**. If you see `fetch failed`, the URL is wrong. If you see
-   an error code other than `42P01`, the key is wrong.
+   Expected: **2 passed**. Troubleshooting:
+   - `must be the project origin with no path` — you pasted the REST endpoint; drop the `/rest/v1/`.
+   - `fetch failed` — the hostname is wrong or the project is still provisioning.
+   - `401 Invalid API key`, or `expected 401 to be 200` on the health check — the anon key is wrong or truncated.
+   - an error code other than `PGRST205` on the query test — read the message; the connection itself is fine.
 
 > The anon key is safe in a browser — Row Level Security is what protects the
 > data. The **service role** key (same page) is not; it never goes in
