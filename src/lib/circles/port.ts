@@ -20,7 +20,6 @@ export interface CreateCircleArgs {
   amountKoboText: string;
   periodDays: number;
   memberTarget: number;
-  createdBy?: string | null;
 }
 
 export interface InviteMemberArgs {
@@ -28,13 +27,11 @@ export interface InviteMemberArgs {
   circleId: string;
   userId: string;
   payoutPosition: number;
-  actorId?: string | null;
 }
 
 export interface KeyedEntityArgs {
   idempotencyKey: string;
   id: string;
-  actorId?: string | null;
 }
 
 export interface ActivateCircleArgs extends KeyedEntityArgs {

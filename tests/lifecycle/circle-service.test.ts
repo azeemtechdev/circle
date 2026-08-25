@@ -4,7 +4,7 @@ import { CircleError, CircleService } from '@/lib/circles/circles';
 import { Ledger } from '@/lib/ledger/ledger';
 import { nairaToKobo } from '@/lib/money';
 
-import { createTestDb, ledgerNet, type TestDb } from '../support/pglite';
+import { actAs, createTestDb, ledgerNet, newUserId, type TestDb } from '../support/pglite';
 import { PgliteCirclePort } from '../support/pglite-circles-port';
 import { PgliteLedgerPort } from '../support/pglite-port';
 
@@ -15,6 +15,7 @@ describe('CircleService input guards', () => {
   beforeAll(async () => {
     db = await createTestDb();
     circles = new CircleService(new PgliteCirclePort(db));
+    await actAs(db, await newUserId(db));
   }, 60_000);
 
   const valid = {
@@ -78,6 +79,10 @@ describe('CircleService drives a whole circle through the ledger', () => {
     const MEMBERS = 3;
     const amountKobo = nairaToKobo(2_000n);
 
+    // Since 0004 the actor comes from auth.uid(), so the test must sign in.
+    const ownerId = await newUserId(db);
+    await actAs(db, ownerId);
+
     const circleId = await circles.createCircle({
       idempotencyKey: 'svc-create',
       name: 'Service circle',
@@ -86,17 +91,24 @@ describe('CircleService drives a whole circle through the ledger', () => {
       memberTarget: MEMBERS,
     });
 
+    const userIds: string[] = [];
     for (let position = 1; position <= MEMBERS; position += 1) {
-      const userId = (await db.query<{ v: string }>(`select gen_random_uuid() as v`)).rows[0]!.v;
+      const userId = position === 1 ? ownerId : await newUserId(db);
+      userIds.push(userId);
+
+      await actAs(db, ownerId);
       const membershipId = await circles.inviteMember({
         idempotencyKey: `svc-invite-${position}`,
         circleId,
         userId,
         payoutPosition: position,
       });
+
+      await actAs(db, userId);
       await circles.acceptInvite({ idempotencyKey: `svc-join-${position}`, id: membershipId });
     }
 
+    await actAs(db, ownerId);
     await circles.activateCircle({
       idempotencyKey: 'svc-activate',
       id: circleId,
@@ -111,22 +123,30 @@ describe('CircleService drives a whole circle through the ledger', () => {
         )
       ).rows[0]!.v;
 
-      const contributions = await db.query<{ id: string }>(
-        `select id from contributions where round_id = $1 order by id`,
+      const contributions = await db.query<{ id: string; payer_user: string }>(
+        `select c.id, m.user_id as payer_user
+         from contributions c join memberships m on m.id = c.payer_membership_id
+         where c.round_id = $1 order by c.id`,
         [roundId],
       );
 
+      const recipientUser = userIds[roundNumber - 1]!;
+
       for (const [index, row] of contributions.rows.entries()) {
+        await actAs(db, row.payer_user);
         await circles.claimContribution({
           idempotencyKey: `svc-${roundNumber}-claim-${index}`,
           id: row.id,
         });
+
+        await actAs(db, recipientUser);
         await circles.confirmContribution({
           idempotencyKey: `svc-${roundNumber}-confirm-${index}`,
           id: row.id,
         });
       }
 
+      await actAs(db, recipientUser);
       await circles.closeRound({ idempotencyKey: `svc-${roundNumber}-close`, id: roundId });
       expect(await ledgerNet(db)).toBe(0n);
     }

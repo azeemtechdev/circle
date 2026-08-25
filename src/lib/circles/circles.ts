@@ -22,7 +22,6 @@ export interface CreateCircleInput {
   amountKobo: Kobo;
   periodDays: number;
   memberTarget: number;
-  createdBy?: string | null;
 }
 
 export interface InviteMemberInput {
@@ -30,13 +29,11 @@ export interface InviteMemberInput {
   circleId: string;
   userId: string;
   payoutPosition: number;
-  actorId?: string | null;
 }
 
 export interface ActionInput {
   idempotencyKey: string;
   id: string;
-  actorId?: string | null;
 }
 
 export interface ActivateCircleInput extends ActionInput {
@@ -82,7 +79,6 @@ export class CircleService {
       amountKoboText: koboToText(input.amountKobo),
       periodDays: input.periodDays,
       memberTarget: input.memberTarget,
-      createdBy: input.createdBy ?? null,
     });
   }
 
@@ -100,7 +96,6 @@ export class CircleService {
       circleId: input.circleId,
       userId: input.userId,
       payoutPosition: input.payoutPosition,
-      actorId: input.actorId ?? null,
     });
   }
 
@@ -153,10 +148,6 @@ function requireKey(key: string): void {
   }
 }
 
-function normalise(input: ActionInput): { idempotencyKey: string; id: string; actorId: string | null } {
-  return {
-    idempotencyKey: input.idempotencyKey,
-    id: input.id,
-    actorId: input.actorId ?? null,
-  };
+function normalise(input: ActionInput): { idempotencyKey: string; id: string } {
+  return { idempotencyKey: input.idempotencyKey, id: input.id };
 }

@@ -38,7 +38,6 @@ export class SupabaseCirclePort implements CirclePort {
       p_amount_kobo: args.amountKoboText,
       p_period_days: args.periodDays,
       p_member_target: args.memberTarget,
-      p_created_by: args.createdBy ?? null,
     });
   }
 
@@ -48,7 +47,6 @@ export class SupabaseCirclePort implements CirclePort {
       p_circle_id: args.circleId,
       p_user_id: args.userId,
       p_payout_position: args.payoutPosition,
-      p_actor_id: args.actorId ?? null,
     });
   }
 
@@ -56,7 +54,6 @@ export class SupabaseCirclePort implements CirclePort {
     return this.rpc('accept_invite', {
       p_idempotency_key: args.idempotencyKey,
       p_membership_id: args.id,
-      p_actor_id: args.actorId ?? null,
     });
   }
 
@@ -65,7 +62,6 @@ export class SupabaseCirclePort implements CirclePort {
       p_idempotency_key: args.idempotencyKey,
       p_circle_id: args.id,
       p_start_date: args.startDate ?? null,
-      p_actor_id: args.actorId ?? null,
     });
   }
 
@@ -73,7 +69,6 @@ export class SupabaseCirclePort implements CirclePort {
     return this.rpc('claim_contribution', {
       p_idempotency_key: args.idempotencyKey,
       p_contribution_id: args.id,
-      p_actor_id: args.actorId ?? null,
     });
   }
 
@@ -81,7 +76,6 @@ export class SupabaseCirclePort implements CirclePort {
     return this.rpc('confirm_contribution', {
       p_idempotency_key: args.idempotencyKey,
       p_contribution_id: args.id,
-      p_actor_id: args.actorId ?? null,
     });
   }
 
@@ -89,7 +83,6 @@ export class SupabaseCirclePort implements CirclePort {
     return this.rpc('close_round', {
       p_idempotency_key: args.idempotencyKey,
       p_round_id: args.id,
-      p_actor_id: args.actorId ?? null,
     });
   }
 
@@ -98,7 +91,6 @@ export class SupabaseCirclePort implements CirclePort {
       p_idempotency_key: args.idempotencyKey,
       p_circle_id: args.id,
       p_reason: args.reason ?? null,
-      p_actor_id: args.actorId ?? null,
     });
   }
 }

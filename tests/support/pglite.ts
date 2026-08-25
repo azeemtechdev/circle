@@ -40,6 +40,26 @@ export async function createTestDb(): Promise<TestDb> {
 }
 
 /**
+ * Signs the session in as a given user.
+ *
+ * Migration 0004 derives the actor from `auth.uid()`, which reads the request
+ * JWT's `sub` claim. Setting that claim is how a test says who is calling — the
+ * same mechanism PostgREST uses in production, so the authorization checks
+ * under test are the real ones.
+ *
+ * Pass null to become anonymous.
+ */
+export async function actAs(db: TestDb, userId: string | null): Promise<void> {
+  await db.query(`select set_config('request.jwt.claim.sub', $1, false)`, [userId ?? '']);
+}
+
+/** Creates a user id and returns it. There is no auth.users in PGlite. */
+export async function newUserId(db: TestDb): Promise<string> {
+  const result = await db.query<{ id: string }>('select gen_random_uuid() as id');
+  return result.rows[0]!.id;
+}
+
+/**
  * Seeds a circle with real rows and returns its accounts: one per member plus
  * the clearing account.
  *
