@@ -13,7 +13,8 @@
     "test:smoke": "vitest run tests/supabase.smoke.test.ts",
     "test:ledger": "vitest run tests/ledger src/lib/money.test.ts",
     "reconcile": "node --experimental-strip-types --env-file-if-exists=.env.local scripts/reconcile.ts",
-    "verify": "npm run lint && npm run typecheck && npm run test"
+    "lockfile:check": "npm ci --dry-run --no-audit --no-fund",
+    "verify": "npm run lockfile:check && npm run lint && npm run typecheck && npm run test"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.4",
