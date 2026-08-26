@@ -60,25 +60,27 @@ describe('RLS scopes every read to your own circles', () => {
       ])
     ).rows[0]!.v;
 
-    const aliceMembership = (
-      await db.query<{ v: string }>(`select invite_member($1,$2,$3,$4) as v`, [
-        'a-inv-1',
-        aliceCircle,
-        aliceId,
-        1,
-      ])
+    // Owner is auto-enrolled at position 1 by create_circle. Look up that
+    // membership and only invite/accept the remaining member(s).
+    const ownerMembership = (
+      await db.query<{ v: string }>(
+        `select id as v from memberships where circle_id = $1 and payout_position = 1`,
+        [aliceCircle],
+      )
     ).rows[0]!.v;
+
     const bobMembership = (
-      await db.query<{ v: string }>(`select invite_member($1,$2,$3,$4) as v`, [
+      await db.query<{ v: string }>(`select invite_member($1,$2,$3,$4,$5,$6) as v`, [
         'a-inv-2',
         aliceCircle,
-        bobId,
         2,
+        bobId,
+        null,
+        null,
       ])
     ).rows[0]!.v;
 
-    await actAs(db, aliceId);
-    await db.query(`select accept_invite($1,$2)`, ['a-join-1', aliceMembership]);
+    // Owner already joined; accept bob's invite only.
     await actAs(db, bobId);
     await db.query(`select accept_invite($1,$2)`, ['a-join-2', bobMembership]);
 
@@ -97,24 +99,23 @@ describe('RLS scopes every read to your own circles', () => {
         2,
       ])
     ).rows[0]!.v;
-    const sm1 = (
-      await db.query<{ v: string }>(`select invite_member($1,$2,$3,$4) as v`, [
-        's-inv-1',
-        strangerCircle,
-        strangerId,
-        1,
-      ])
+    const strangerOwnerMembership = (
+      await db.query<{ v: string }>(
+        `select id as v from memberships where circle_id = $1 and payout_position = 1`,
+        [strangerCircle],
+      )
     ).rows[0]!.v;
+
     const sm2 = (
-      await db.query<{ v: string }>(`select invite_member($1,$2,$3,$4) as v`, [
+      await db.query<{ v: string }>(`select invite_member($1,$2,$3,$4,$5,$6) as v`, [
         's-inv-2',
         strangerCircle,
-        otherUser,
         2,
+        otherUser,
+        null,
+        null,
       ])
     ).rows[0]!.v;
-    await actAs(db, strangerId);
-    await db.query(`select accept_invite($1,$2)`, ['s-join-1', sm1]);
     await actAs(db, otherUser);
     await db.query(`select accept_invite($1,$2)`, ['s-join-2', sm2]);
     await actAs(db, strangerId);

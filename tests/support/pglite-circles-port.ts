@@ -33,11 +33,14 @@ export class PgliteCirclePort implements CirclePort {
   }
 
   inviteMember(args: InviteMemberArgs): Promise<string> {
-    return this.call(`select invite_member($1, $2, $3, $4) as id`, [
+    // New canonical signature: (idempotency_key, circle_id, payout_position, user_id, phone?, invite_token?)
+    return this.call(`select invite_member($1, $2, $3, $4, $5, $6) as id`, [
       args.idempotencyKey,
       args.circleId,
-      args.userId,
       args.payoutPosition,
+      args.userId ?? null,
+      args.phone ?? null,
+      args.inviteToken ?? null,
     ]);
   }
 

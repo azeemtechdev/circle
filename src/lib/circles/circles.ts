@@ -27,13 +27,17 @@ export interface CreateCircleInput {
 export interface InviteMemberInput {
   idempotencyKey: string;
   circleId: string;
-  userId: string;
+  userId?: string | null;
+  phone?: string | null;
+  inviteToken?: string | null;
   payoutPosition: number;
 }
 
 export interface ActionInput {
   idempotencyKey: string;
-  id: string;
+  id?: string;
+  inviteToken?: string | null;
+  phone?: string | null;
 }
 
 export interface ActivateCircleInput extends ActionInput {
@@ -91,16 +95,35 @@ export class CircleService {
       );
     }
 
+    const hasUserId = typeof input.userId === 'string' && input.userId.trim().length > 0;
+    const hasPhone = typeof input.phone === 'string' && input.phone.trim().length > 0;
+    const hasInviteToken = typeof input.inviteToken === 'string' && input.inviteToken.trim().length > 0;
+
+    if (!hasUserId && !hasPhone && !hasInviteToken) {
+      throw new CircleError('An invite needs either a user id, a phone number, or an invite token.');
+    }
+
     return this.port.inviteMember({
       idempotencyKey: input.idempotencyKey,
       circleId: input.circleId,
-      userId: input.userId,
+      userId: input.userId ?? null,
+      phone: input.phone ?? null,
+      inviteToken: input.inviteToken ?? null,
       payoutPosition: input.payoutPosition,
     });
   }
 
   async acceptInvite(input: ActionInput): Promise<string> {
     requireKey(input.idempotencyKey);
+
+    const hasId = typeof input.id === 'string' && input.id.trim().length > 0;
+    const hasInviteToken = typeof input.inviteToken === 'string' && input.inviteToken.trim().length > 0;
+    const hasPhone = typeof input.phone === 'string' && input.phone.trim().length > 0;
+
+    if (!hasId && !hasInviteToken && !hasPhone) {
+      throw new CircleError('Accepting an invite requires either a membership id, an invite token, or a phone number.');
+    }
+
     return this.port.acceptInvite(normalise(input));
   }
 
@@ -148,6 +171,11 @@ function requireKey(key: string): void {
   }
 }
 
-function normalise(input: ActionInput): { idempotencyKey: string; id: string } {
-  return { idempotencyKey: input.idempotencyKey, id: input.id };
+function normalise(input: ActionInput): { idempotencyKey: string; id?: string; inviteToken?: string | null; phone?: string | null } {
+  return {
+    idempotencyKey: input.idempotencyKey,
+    id: input.id,
+    inviteToken: input.inviteToken ?? null,
+    phone: input.phone ?? null,
+  };
 }

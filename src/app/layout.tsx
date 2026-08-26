@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Circle",
-  description: "Savings circles (ajo / esusu) that keep their own books.",
+  description: "Digitized rotating savings circles with transparent ledger tracking.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

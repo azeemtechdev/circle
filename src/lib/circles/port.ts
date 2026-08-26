@@ -25,13 +25,17 @@ export interface CreateCircleArgs {
 export interface InviteMemberArgs {
   idempotencyKey: string;
   circleId: string;
-  userId: string;
+  userId?: string | null;
+  phone?: string | null;
+  inviteToken?: string | null;
   payoutPosition: number;
 }
 
 export interface KeyedEntityArgs {
   idempotencyKey: string;
-  id: string;
+  id?: string;
+  inviteToken?: string | null;
+  phone?: string | null;
 }
 
 export interface ActivateCircleArgs extends KeyedEntityArgs {

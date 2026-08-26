@@ -1,6 +1,19 @@
+import {
+  createBrowserClient,
+  createServerClient,
+  type CookieOptions,
+} from '@supabase/ssr';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 import { requireSupabaseEnv, readSupabaseEnv, type SupabaseEnv } from '@/lib/env';
+
+export type SupabaseCookieAdapter = {
+  getAll: () => Array<{ name: string; value: string }> | Promise<Array<{ name: string; value: string }> | null> | null;
+  setAll?: (
+    cookiesToSet: Array<{ name: string; value: string; options: CookieOptions }>,
+    headers: Record<string, string>,
+  ) => void | Promise<void>;
+};
 
 /**
  * Supabase client factory.
@@ -25,4 +38,28 @@ export function createSupabaseClient(env: SupabaseEnv = requireSupabaseEnv()): S
 export function createSupabaseClientIfConfigured(): SupabaseClient | null {
   const env = readSupabaseEnv();
   return env ? createSupabaseClient(env) : null;
+}
+
+export function createBrowserSupabaseClient(env: SupabaseEnv = requireSupabaseEnv()): SupabaseClient {
+  return createBrowserClient(env.url, env.anonKey, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+    },
+  });
+}
+
+export function createServerSupabaseClient(config: SupabaseEnv & { cookies: SupabaseCookieAdapter }): SupabaseClient {
+  const { url, anonKey, cookies } = config;
+
+  return createServerClient(url, anonKey, {
+    cookies: {
+      getAll: cookies.getAll,
+      setAll: cookies.setAll ?? (() => undefined),
+    },
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+    },
+  });
 }

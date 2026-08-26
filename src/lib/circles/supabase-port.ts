@@ -45,15 +45,19 @@ export class SupabaseCirclePort implements CirclePort {
     return this.rpc('invite_member', {
       p_idempotency_key: args.idempotencyKey,
       p_circle_id: args.circleId,
-      p_user_id: args.userId,
       p_payout_position: args.payoutPosition,
+      p_user_id: args.userId ?? null,
+      p_phone: args.phone ?? null,
+      p_invite_token: args.inviteToken ?? null,
     });
   }
 
   acceptInvite(args: KeyedEntityArgs): Promise<string> {
     return this.rpc('accept_invite', {
       p_idempotency_key: args.idempotencyKey,
-      p_membership_id: args.id,
+      p_membership_id: args.id ?? null,
+      p_invite_token: args.inviteToken ?? null,
+      p_phone: args.phone ?? null,
     });
   }
 

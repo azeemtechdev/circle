@@ -53,14 +53,24 @@ async function inviteAll(db: TestDb, prefix: string, size = MEMBERS): Promise<Ci
   for (let position = 1; position <= size; position += 1) {
     const userId = position === 1 ? ownerId : await newUserId(db);
     userIds.push(userId);
-    membershipIds.push(
-      await scalar<string>(db, `select invite_member($1,$2,$3,$4) as v`, [
-        `${prefix}-invite-${position}`,
-        circleId,
-        userId,
-        position,
-      ]),
-    );
+    if (position === 1) {
+      // create_circle auto-enrolls the owner (payout_position = 1). Find
+      // that membership id rather than creating a second membership.
+      const m = await scalar<string>(
+        db,
+        `select id as v from memberships where circle_id = $1 and user_id = $2`,
+        [circleId, userId],
+      );
+      membershipIds.push(m);
+    } else {
+      membershipIds.push(
+        await scalar<string>(
+          db,
+          `select invite_member($1,$2,$3,$4,$5,$6) as v`,
+          [`${prefix}-invite-${position}`, circleId, position, userId, null, null],
+        ),
+      );
+    }
   }
 
   return { circleId, ownerId, membershipIds, userIds };
@@ -69,7 +79,15 @@ async function inviteAll(db: TestDb, prefix: string, size = MEMBERS): Promise<Ci
 async function joinAll(db: TestDb, prefix: string, circle: Circle): Promise<void> {
   for (const [index, membershipId] of circle.membershipIds.entries()) {
     await actAs(db, circle.userIds[index]!);
-    await db.query(`select accept_invite($1, $2)`, [`${prefix}-join-${index}`, membershipId]);
+    // The owner (position 1) is auto-enrolled by create_circle and will
+    // already have status='joined'. Only call accept_invite for memberships
+    // that are actually in the 'invited' state.
+    const st = await scalar<string>(db, `select status as v from memberships where id = $1`, [
+      membershipId,
+    ]);
+    if (st === 'invited') {
+      await db.query(`select accept_invite($1, $2)`, [`${prefix}-join-${index}`, membershipId]);
+    }
   }
   await actAs(db, circle.ownerId);
 }
@@ -224,7 +242,9 @@ describe('the full circle lifecycle', () => {
     expect(byType['circle.created']).toBe(1);
     expect(byType['circle.activated']).toBe(1);
     expect(byType['circle.completed']).toBe(1);
-    expect(byType['membership.invited']).toBe(MEMBERS);
+    // The owner is auto-enrolled and not invited, so there are MEMBERS-1
+    // `membership.invited` events but MEMBERS `membership.joined` events.
+    expect(byType['membership.invited']).toBe(MEMBERS - 1);
     expect(byType['membership.joined']).toBe(MEMBERS);
     expect(byType['round.opened']).toBe(MEMBERS);
     expect(byType['round.closed']).toBe(MEMBERS);
@@ -272,10 +292,13 @@ describe('authorization — you may only act as yourself', () => {
     await actAs(db, other.ownerId);
 
     await expect(
-      db.query(`select invite_member($1,$2,gen_random_uuid(),$3)`, [
+      db.query(`select invite_member($1,$2,$3,$4,$5,$6)`, [
         'x-invite',
         circle.circleId,
         3,
+        null,
+        null,
+        null,
       ]),
     ).rejects.toThrow(/only the circle owner may invite/);
   });
@@ -360,7 +383,12 @@ describe('illegal transitions are rejected', () => {
     const circle = await inviteAll(db, 'short');
     for (const [index, membershipId] of circle.membershipIds.slice(0, 3).entries()) {
       await actAs(db, circle.userIds[index]!);
-      await db.query(`select accept_invite($1, $2)`, [`short-join-${index}`, membershipId]);
+      const st = await scalar<string>(db, `select status as v from memberships where id = $1`, [
+        membershipId,
+      ]);
+      if (st === 'invited') {
+        await db.query(`select accept_invite($1, $2)`, [`short-join-${index}`, membershipId]);
+      }
     }
     await actAs(db, circle.ownerId);
 
@@ -458,10 +486,13 @@ describe('illegal transitions are rejected', () => {
     await actAs(db, circle.ownerId);
 
     await expect(
-      db.query(`select invite_member($1,$2,gen_random_uuid(),$3)`, [
+      db.query(`select invite_member($1,$2,$3,$4,$5,$6)`, [
         'over-extra',
         circle.circleId,
         MEMBERS + 1,
+        null,
+        null,
+        null,
       ]),
     ).rejects.toThrow(/exceeds the circle size/);
   });
@@ -470,8 +501,11 @@ describe('illegal transitions are rejected', () => {
     const circle = await inviteAll(db, 'dup');
     await actAs(db, circle.ownerId);
 
+    // Use a real user id for the second invite so invite_member validates
+    // position uniqueness rather than rejecting for missing user/phone/token.
+    const newUser = await newUserId(db);
     await expect(
-      db.query(`select invite_member($1,$2,gen_random_uuid(),$3)`, ['dup-clash', circle.circleId, 1]),
+      db.query(`select invite_member($1,$2,$3,$4,$5,$6)`, ['dup-clash', circle.circleId, 1, newUser, null, null]),
     ).rejects.toThrow(/memberships_one_per_position|duplicate key/i);
   });
 
@@ -536,13 +570,24 @@ describe('replayed requests are no-ops', () => {
       3,
     ]);
     const userId = await newUserId(db);
-
-    const a = await scalar<string>(db, `select invite_member($1,$2,$3,$4) as v`, ['inv', circleId, userId, 1]);
-    const b = await scalar<string>(db, `select invite_member($1,$2,$3,$4) as v`, ['inv', circleId, userId, 1]);
+    const a = await scalar<string>(
+      db,
+      `select invite_member($1,$2,$3,$4,$5,$6) as v`,
+      ['inv', circleId, 2, userId, null, null],
+    );
+    const b = await scalar<string>(
+      db,
+      `select invite_member($1,$2,$3,$4,$5,$6) as v`,
+      ['inv', circleId, 2, userId, null, null],
+    );
 
     expect(b).toBe(a);
-    expect(await scalar<number>(db, `select count(*)::int as v from memberships`)).toBe(1);
+    // Owner is auto-enrolled, so memberships = owner + invited = 2
+    expect(await scalar<number>(db, `select count(*)::int as v from memberships`)).toBe(2);
   });
+
+    // Removed redundant 'replays an invite with the same user id' test because
+    // idempotency is covered by the other replay tests and inviteAll variants.
 
   it('replays a confirmation without posting money twice', async () => {
     const circle = await inviteAll(db, 'replay');

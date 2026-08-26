@@ -6,6 +6,7 @@ One line per meaningful change, newest first.
 
 ## Unreleased
 
+- `phase-3` — Auth wiring: cookie-bound browser/server Supabase clients and middleware refresh session cookies for the Phase 3 auth flow
 - `phase-0` — **Phase 0 complete**: CI green on `ee03f03`, hello page live on Vercel, Supabase reachable from a test
 - `phase-0` — Fix: `typecheck` now runs `next typegen` first — Next 16's generated `LayoutProps` global lives in gitignored `.next/`, so CI failed with TS2304 while local passed on build residue
 - `phase-0` — Fix: `npm ci` failed in CI — regenerated `package-lock.json` to include the missing `@emnapi/*` wasm32-wasi entries, and pinned CI to Node 24.x to match the dev machine

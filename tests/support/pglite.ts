@@ -50,13 +50,31 @@ export async function createTestDb(): Promise<TestDb> {
  * Pass null to become anonymous.
  */
 export async function actAs(db: TestDb, userId: string | null): Promise<void> {
+  if (userId) {
+    await db.query(
+      `insert into auth.users (id, email, phone, raw_user_meta_data)
+       values ($1, $2, $3, $4)
+       on conflict (id) do nothing`,
+      [userId, `${userId}@circle.test`, null, { full_name: 'Circle member' }],
+    );
+  }
+
   await db.query(`select set_config('request.jwt.claim.sub', $1, false)`, [userId ?? '']);
 }
 
-/** Creates a user id and returns it. There is no auth.users in PGlite. */
+/** Creates a user id and returns it. The mock auth table is seeded so real FK checks pass. */
 export async function newUserId(db: TestDb): Promise<string> {
   const result = await db.query<{ id: string }>('select gen_random_uuid() as id');
-  return result.rows[0]!.id;
+  const userId = result.rows[0]!.id;
+
+  await db.query(
+    `insert into auth.users (id, email, phone, raw_user_meta_data)
+     values ($1, $2, $3, $4)
+     on conflict (id) do nothing`,
+    [userId, `${userId}@circle.test`, null, { full_name: 'Circle member' }],
+  );
+
+  return userId;
 }
 
 /**
@@ -94,11 +112,20 @@ export async function seedCircleAccounts(
   const memberAccountIds: string[] = [];
 
   for (let i = 0; i < memberCount; i += 1) {
+    const uid = await db.query<{ id: string }>('select gen_random_uuid() as id');
+    const userId = uid.rows[0]!.id;
+    await db.query(
+      `insert into auth.users (id, email, phone, raw_user_meta_data)
+       values ($1, $2, $3, $4)
+       on conflict (id) do nothing`,
+      [userId, `${userId}@circle.test`, null, { full_name: 'Ledger fixture' }],
+    );
+
     const membership = await db.query<{ id: string }>(
       `insert into memberships (circle_id, user_id, payout_position, status)
-       values ($1, gen_random_uuid(), $2, 'joined')
+       values ($1, $2, $3, 'joined')
        returning id`,
-      [circleId, i + 1],
+      [circleId, userId, i + 1],
     );
     const membershipId = membership.rows[0]!.id;
     membershipIds.push(membershipId);

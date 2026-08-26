@@ -97,15 +97,25 @@ describe('CircleService drives a whole circle through the ledger', () => {
       userIds.push(userId);
 
       await actAs(db, ownerId);
-      const membershipId = await circles.inviteMember({
-        idempotencyKey: `svc-invite-${position}`,
-        circleId,
-        userId,
-        payoutPosition: position,
-      });
+      let membershipId: string;
+      if (position === 1) {
+        // Owner is auto-enrolled by create_circle; fetch that membership id
+        const row = await db.query<{ v: string }>(
+          `select id as v from memberships where circle_id = $1 and user_id = $2`,
+          [circleId, ownerId],
+        );
+        membershipId = row.rows[0]!.v;
+      } else {
+        membershipId = await circles.inviteMember({
+          idempotencyKey: `svc-invite-${position}`,
+          circleId,
+          userId,
+          payoutPosition: position,
+        });
 
-      await actAs(db, userId);
-      await circles.acceptInvite({ idempotencyKey: `svc-join-${position}`, id: membershipId });
+        await actAs(db, userId);
+        await circles.acceptInvite({ idempotencyKey: `svc-join-${position}`, id: membershipId });
+      }
     }
 
     await actAs(db, ownerId);
