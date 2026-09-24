@@ -46,8 +46,12 @@ jobs:
       # Unit tests always run. The Supabase smoke test runs only when the repo
       # secrets exist (they are absent on forked PRs) and skips itself otherwise
       # — see tests/supabase.smoke.test.ts.
+      #
+      # Runs with coverage so the thresholds in vitest.config.mts gate the
+      # build. CLAUDE.md's coverage target was an unmeasured claim until the
+      # provider was installed; a threshold nothing enforces is the same thing.
       - name: Tests
-        run: npm run test
+        run: npm run coverage
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}

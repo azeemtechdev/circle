@@ -12,6 +12,7 @@
     "test:watch": "vitest",
     "test:smoke": "vitest run tests/supabase.smoke.test.ts",
     "test:ledger": "vitest run tests/ledger src/lib/money.test.ts",
+    "coverage": "vitest run --coverage",
     "reconcile": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --env-file-if-exists=.env.local scripts/reconcile.mts",
     "lockfile:check": "npm ci --dry-run --no-audit --no-fund",
     "verify": "npm run lockfile:check && npm run lint && npm run typecheck && npm run test"
@@ -28,6 +29,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitest/coverage-v8": "^4.1.11",
     "dotenv": "^17.4.2",
     "eslint": "^9",
     "eslint-config-next": "16.3.2",

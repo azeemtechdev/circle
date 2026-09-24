@@ -12,38 +12,48 @@ on:
 
 jobs:
   ping:
-    name: ping REST endpoint
+    name: query the database
     runs-on: ubuntu-latest
 
     steps:
       - name: Ping Supabase
         env:
           SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           set -euo pipefail
 
-          if [ -z "${SUPABASE_URL}" ] || [ -z "${SUPABASE_ANON_KEY}" ]; then
+          if [ -z "${SUPABASE_URL}" ] || [ -z "${SUPABASE_SERVICE_ROLE_KEY}" ]; then
             echo "::error::Supabase secrets are not set on this repository."
-            echo "Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY"
+            echo "Add NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY"
             echo "under Settings -> Secrets and variables -> Actions."
             exit 1
           fi
 
-          # /auth/v1/health is the only liveness endpoint the anon key may call;
-          # /rest/v1/ is service_role-only and answers 401 to an anon key.
-          # TODO(phase-1): once a table exists, SELECT from it instead — a health
-          # check proves the project is up but may not count as Postgres activity.
+          # This is a real SELECT against a real table, not a health check.
+          # /auth/v1/health proves the project is up, but the pause timer counts
+          # DATABASE activity, so a health check could let the project pause
+          # while this workflow reported success every week.
+          #
+          # service_role rather than anon because anon holds no select grant on
+          # any table (0002, 0004) and would get a 401 — which would be a
+          # liveness check again, not a query.
+          #
+          # `profiles` is the table chosen on purpose: it has existed since 0004
+          # and is not going away. An empty result is a pass; reaching Postgres
+          # is the point, not what comes back.
           status=$(curl --silent --show-error --location \
             --max-time 30 \
-            --output /dev/null \
+            --output /tmp/keepalive-body \
             --write-out '%{http_code}' \
-            --header "apikey: ${SUPABASE_ANON_KEY}" \
-            "${SUPABASE_URL%/}/auth/v1/health")
+            --header "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            "${SUPABASE_URL%/}/rest/v1/profiles?select=id&limit=1")
 
           echo "Supabase responded with HTTP ${status}"
 
           if [ "${status}" != "200" ]; then
-            echo "::error::Expected HTTP 200. The project may be paused or the key rotated."
+            echo "::error::Expected HTTP 200 from a SELECT. The project may be paused, the key rotated, or the table missing."
+            cat /tmp/keepalive-body
             exit 1
           fi

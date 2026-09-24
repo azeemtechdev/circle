@@ -175,18 +175,48 @@ describe('RLS scopes every read to your own circles', () => {
     expect(stranger).toBeLessThan(total);
   });
 
-  it('has RLS enabled on every table holding circle data', async () => {
+  // Enumerated from pg_tables rather than checked against a hardcoded list, so
+  // a table added in a later migration without RLS fails here instead of
+  // shipping unnoticed. Anything deliberately exempt has to be named below,
+  // with the reason it is safe.
+  const RLS_EXEMPT: Record<string, string> = {
+    // Internal bookkeeping, never read by a client: every privilege is revoked
+    // from anon, authenticated and service_role in 0003 and never re-granted,
+    // and it is touched only by SECURITY DEFINER helpers whose EXECUTE is
+    // revoked too. There is no role for a policy to apply to.
+    idempotency_keys: 'no grant to any application role',
+  };
+
+  it('has RLS enabled on every public table', async () => {
     const result = await db.query<{ tablename: string; rowsecurity: boolean }>(
       `select tablename, rowsecurity from pg_tables
-       where schemaname = 'public'
-         and tablename in ('profiles','circles','memberships','rounds','contributions',
-                           'accounts','transfers','ledger_entries','events')
-       order by tablename`,
+        where schemaname = 'public'
+        order by tablename`,
     );
 
-    expect(result.rows).toHaveLength(9);
-    for (const row of result.rows) {
-      expect(row.rowsecurity, `${row.tablename} must have RLS enabled`).toBe(true);
+    expect(result.rows.length).toBeGreaterThan(0);
+
+    const unprotected = result.rows
+      .filter((row) => !row.rowsecurity && !(row.tablename in RLS_EXEMPT))
+      .map((row) => row.tablename);
+
+    expect(
+      unprotected,
+      `these tables have no RLS and are not listed as exempt: ${unprotected.join(', ')}`,
+    ).toEqual([]);
+  });
+
+  it('keeps every exempt table ungranted, which is what makes it exempt', async () => {
+    for (const tablename of Object.keys(RLS_EXEMPT)) {
+      const result = await db.query<{ privilege: string }>(
+        `select privilege from (
+           select unnest(array['select','insert','update','delete']) as privilege
+         ) p
+         cross join (select unnest(array['anon','authenticated','service_role']) as role) r
+         where has_table_privilege(r.role, $1, p.privilege)`,
+        [`public.${tablename}`],
+      );
+      expect(result.rows, `${tablename} is exempt from RLS but grants access`).toEqual([]);
     }
   });
 });
