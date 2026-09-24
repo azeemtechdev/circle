@@ -34,13 +34,17 @@ export default defineConfig({
         // rather than with the UI.
         'src/lib/http/**/*.ts',
         'src/lib/money.ts',
+        'src/lib/format.ts',
         'src/lib/db-error.ts',
       ],
       exclude: [
         '**/*.test.ts',
-        // Pulls in next/headers, so a node test cannot import it. What it
-        // builds is covered through the parsers and handleTransition.
+        // These two import next/headers, which a node test cannot load. They
+        // hold no rules of their own — one builds a service, the other is
+        // select statements against the views from 0008, and those views are
+        // tested directly in tests/lifecycle/read-views.test.ts.
         'src/lib/circles/service-for-request.ts',
+        'src/lib/circles/queries.ts',
       ],
       thresholds: {
         lines: 90,

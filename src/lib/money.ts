@@ -46,6 +46,29 @@ export function nairaToKobo(naira: bigint): Kobo {
 }
 
 /**
+ * Parses naira as a person typed it ("5000", "5,000.50", "₦2000.10") into
+ * exact kobo.
+ *
+ * This is where money enters the system from a keyboard, and the obvious
+ * implementation — `Math.round(Number(input) * 100)` — is wrong: `2000.10 *
+ * 100` is 200010.00000000003. So the two halves are split as strings and
+ * combined with BigInt, and no float is involved at any point.
+ *
+ * Throws rather than guessing. An amount nobody can parse is a question for
+ * the person who typed it, not something to round.
+ */
+export function koboFromNairaInput(input: string): Kobo {
+  const trimmed = input.trim().replace(/[₦,\s]/g, '');
+  if (!/^\d+(\.\d{1,2})?$/.test(trimmed)) {
+    throw new Error('Enter an amount like 5000 or 5000.50');
+  }
+
+  const [whole = '0', fraction = ''] = trimmed.split('.');
+  // '5' means 50 kobo, not 5 — pad before converting.
+  return BigInt(whole) * KOBO_PER_NAIRA + BigInt(fraction.padEnd(2, '0') || '0');
+}
+
+/**
  * Formats kobo as naira for display. UI edge only — never feed the result of
  * this back into a calculation.
  */
