@@ -1,5 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
+import { DatabaseError } from '../db-error.ts';
+
 import type {
   ActivateCircleArgs,
   CancelCircleArgs,
@@ -24,9 +26,12 @@ export class SupabaseCirclePort implements CirclePort {
   private async rpc(fn: string, args: Record<string, unknown>): Promise<string> {
     const { data, error } = await this.client.rpc(fn, args);
 
-    if (error) throw new Error(`${fn} failed: ${error.message}`);
+    // The SQLSTATE is carried through rather than flattened into the message:
+    // the HTTP layer maps 42501 to 403 and 23503 to 404, and matching on
+    // message text would break the first time a message is reworded.
+    if (error) throw new DatabaseError(`${fn} failed: ${error.message}`, error.code ?? null);
     if (typeof data !== 'string') {
-      throw new Error(`${fn} returned no id (got ${JSON.stringify(data)})`);
+      throw new DatabaseError(`${fn} returned no id (got ${JSON.stringify(data)})`, null);
     }
     return data;
   }

@@ -1,3 +1,5 @@
+import { DatabaseError, sqlStateOf } from '@/lib/db-error';
+
 import type {
   ActivateCircleArgs,
   CancelCircleArgs,
@@ -18,8 +20,15 @@ export class PgliteCirclePort implements CirclePort {
   }
 
   private async call(sql: string, params: unknown[]): Promise<string> {
-    const result = await this.db.query<{ id: string }>(sql, params);
-    return result.rows[0]!.id;
+    try {
+      const result = await this.db.query<{ id: string }>(sql, params);
+      return result.rows[0]!.id;
+    } catch (cause) {
+      // Mirrors SupabaseCirclePort: the SQLSTATE has to survive, or a route
+      // test would exercise a different error path from production and the
+      // HTTP status mapping would be tested against nothing.
+      throw new DatabaseError((cause as Error).message, sqlStateOf(cause));
+    }
   }
 
   createCircle(args: CreateCircleArgs): Promise<string> {

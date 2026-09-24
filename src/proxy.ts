@@ -26,10 +26,23 @@ import { readSupabaseEnv } from '@/lib/env';
  */
 
 /** Paths a signed-out visitor may see. Everything else redirects to /login. */
-const PUBLIC_PREFIXES = ['/login', '/signup', '/auth', '/api/auth'];
+const PUBLIC_PREFIXES = ['/login', '/signup', '/auth'];
 
 function isPublic(pathname: string): boolean {
   return pathname === '/' || PUBLIC_PREFIXES.some((p) => pathname.startsWith(p));
+}
+
+/**
+ * The API is never redirected, signed in or not.
+ *
+ * A redirect to /login answers a JSON request with 307 and an HTML page, which
+ * a fetch() caller cannot act on — and worse, a client following redirects
+ * would see a 200 and read a login page as if it were a result. The routes
+ * return a JSON error with the right status instead: the SQL raises
+ * insufficient_privilege for a caller with no session, which becomes 403.
+ */
+function isApi(pathname: string): boolean {
+  return pathname.startsWith('/api/');
 }
 
 export async function proxy(request: NextRequest): Promise<NextResponse> {
@@ -64,7 +77,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user && !isPublic(request.nextUrl.pathname)) {
+  if (!user && !isApi(request.nextUrl.pathname) && !isPublic(request.nextUrl.pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     // So login can send them back where they were heading.

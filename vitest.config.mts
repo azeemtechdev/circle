@@ -26,8 +26,22 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text-summary', 'html'],
-      include: ['src/lib/ledger/**/*.ts', 'src/lib/circles/**/*.ts', 'src/lib/money.ts'],
-      exclude: ['**/*.test.ts'],
+      include: [
+        'src/lib/ledger/**/*.ts',
+        'src/lib/circles/**/*.ts',
+        // The HTTP layer enforces the idempotency-key rule and maps every
+        // Postgres error to a status code, so it belongs with the money code
+        // rather than with the UI.
+        'src/lib/http/**/*.ts',
+        'src/lib/money.ts',
+        'src/lib/db-error.ts',
+      ],
+      exclude: [
+        '**/*.test.ts',
+        // Pulls in next/headers, so a node test cannot import it. What it
+        // builds is covered through the parsers and handleTransition.
+        'src/lib/circles/service-for-request.ts',
+      ],
       thresholds: {
         lines: 90,
         functions: 90,
