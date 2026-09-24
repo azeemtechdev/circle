@@ -53,9 +53,36 @@ export async function actAs(db: TestDb, userId: string | null): Promise<void> {
   await db.query(`select set_config('request.jwt.claim.sub', $1, false)`, [userId ?? '']);
 }
 
-/** Creates a user id and returns it. There is no auth.users in PGlite. */
+/**
+ * Creates a bare user id.
+ *
+ * This does NOT create an auth.users row, so no profile is provisioned. Use it
+ * where a test only needs somebody to act as; use newAuthUser where the test
+ * needs the user to be findable.
+ */
 export async function newUserId(db: TestDb): Promise<string> {
   const result = await db.query<{ id: string }>('select gen_random_uuid() as id');
+  return result.rows[0]!.id;
+}
+
+/**
+ * Signs a user up the way Supabase Auth does: by inserting into auth.users.
+ *
+ * Migration 0005 shims that table in PGlite precisely so this works, which
+ * means the profile row that appears afterwards is created by the real
+ * production trigger and not by the test.
+ */
+export async function newAuthUser(
+  db: TestDb,
+  opts: { email?: string; phone?: string; displayName?: string } = {},
+): Promise<string> {
+  const meta = opts.displayName ? JSON.stringify({ display_name: opts.displayName }) : '{}';
+  const result = await db.query<{ id: string }>(
+    `insert into auth.users (email, phone, raw_user_meta_data)
+     values ($1, $2, $3::jsonb)
+     returning id`,
+    [opts.email ?? null, opts.phone ?? null, meta],
+  );
   return result.rows[0]!.id;
 }
 
