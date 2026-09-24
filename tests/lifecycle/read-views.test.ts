@@ -49,12 +49,7 @@ beforeAll(async () => {
   );
   aliceCircle = created.rows[0]!.v;
 
-  const m1 = await db.query<{ v: string }>(`select invite_member($1,$2,$3,$4) as v`, [
-    'rv-i1',
-    aliceCircle,
-    alice,
-    1,
-  ]);
+  // Alice holds position 1 already: create_circle enrols the owner (0009).
   const m2 = await db.query<{ v: string }>(`select invite_member($1,$2,$3,$4) as v`, [
     'rv-i2',
     aliceCircle,
@@ -62,8 +57,6 @@ beforeAll(async () => {
     2,
   ]);
 
-  await actAs(db, alice);
-  await db.query(`select accept_invite($1,$2)`, ['rv-a1', m1.rows[0]!.v]);
   await actAs(db, bob);
   await db.query(`select accept_invite($1,$2)`, ['rv-a2', m2.rows[0]!.v]);
 

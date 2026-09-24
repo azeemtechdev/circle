@@ -26,9 +26,14 @@ interface Found {
 export function InviteForm({
   circleId,
   nextPosition,
+  currentUserId,
+  memberUserIds,
 }: {
   circleId: string;
   nextPosition: number;
+  currentUserId: string;
+  /** Everyone already in the circle, so a pointless invite is caught here. */
+  memberUserIds: string[];
 }) {
   const router = useRouter();
   const [phone, setPhone] = useState('');
@@ -67,7 +72,23 @@ export function InviteForm({
         );
         return;
       }
-      setFound(rows[0]!);
+
+      const person = rows[0]!;
+
+      // Caught before the button appears rather than after the database says
+      // no. The owner joins their own circle when they create it, so looking
+      // up your own number is a natural thing to try — and the refusal for it
+      // is a unique-constraint violation, which is not an explanation.
+      if (person.id === currentUserId) {
+        setError('That is your own number. You are already in this circle.');
+        return;
+      }
+      if (memberUserIds.includes(person.id)) {
+        setError(`${person.display_name} is already in this circle.`);
+        return;
+      }
+
+      setFound(person);
     } catch (cause) {
       setError((cause as Error).message || 'Could not look that number up. Try again.');
     } finally {

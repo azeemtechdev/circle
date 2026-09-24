@@ -32,8 +32,12 @@ async function statusOf(db: TestDb, table: string, id: string): Promise<string> 
 }
 
 /**
- * Creates a circle owned by a fresh user and invites `MEMBERS` people.
- * The owner takes payout position 1, so they are also an ordinary member.
+ * Creates a circle owned by a fresh user and invites the rest.
+ *
+ * Since migration 0009 create_circle enrols the owner itself, at payout
+ * position 1 and already joined, so invites start at position 2. The owner is
+ * still an ordinary member of the rotation — they simply did not have to
+ * invite themselves.
  */
 async function inviteAll(db: TestDb, prefix: string, size = MEMBERS): Promise<Circle> {
   const ownerId = await newUserId(db);
@@ -47,11 +51,17 @@ async function inviteAll(db: TestDb, prefix: string, size = MEMBERS): Promise<Ci
     size,
   ]);
 
-  const membershipIds: string[] = [];
-  const userIds: string[] = [];
+  const ownerMembershipId = await scalar<string>(
+    db,
+    `select id as v from memberships where circle_id = $1 and user_id = $2`,
+    [circleId, ownerId],
+  );
 
-  for (let position = 1; position <= size; position += 1) {
-    const userId = position === 1 ? ownerId : await newUserId(db);
+  const membershipIds: string[] = [ownerMembershipId];
+  const userIds: string[] = [ownerId];
+
+  for (let position = 2; position <= size; position += 1) {
+    const userId = await newUserId(db);
     userIds.push(userId);
     membershipIds.push(
       await scalar<string>(db, `select invite_member($1,$2,$3,$4) as v`, [
@@ -66,8 +76,10 @@ async function inviteAll(db: TestDb, prefix: string, size = MEMBERS): Promise<Ci
   return { circleId, ownerId, membershipIds, userIds };
 }
 
+/** Everyone except the owner, who joined when the circle was created. */
 async function joinAll(db: TestDb, prefix: string, circle: Circle): Promise<void> {
   for (const [index, membershipId] of circle.membershipIds.entries()) {
+    if (index === 0) continue;
     await actAs(db, circle.userIds[index]!);
     await db.query(`select accept_invite($1, $2)`, [`${prefix}-join-${index}`, membershipId]);
   }
@@ -224,7 +236,12 @@ describe('the full circle lifecycle', () => {
     expect(byType['circle.created']).toBe(1);
     expect(byType['circle.activated']).toBe(1);
     expect(byType['circle.completed']).toBe(1);
-    expect(byType['membership.invited']).toBe(MEMBERS);
+    // One fewer invite than members: since 0009 the owner is enrolled by
+    // create_circle and never invited. They are still joined, so the joined
+    // count is unchanged — which is the point of doing it as a single
+    // membership.joined event rather than an invite the owner instantly
+    // accepts.
+    expect(byType['membership.invited']).toBe(MEMBERS - 1);
     expect(byType['membership.joined']).toBe(MEMBERS);
     expect(byType['round.opened']).toBe(MEMBERS);
     expect(byType['round.closed']).toBe(MEMBERS);
@@ -358,9 +375,14 @@ describe('illegal transitions are rejected', () => {
 
   it('refuses to activate a circle that is still short of members', async () => {
     const circle = await inviteAll(db, 'short');
-    for (const [index, membershipId] of circle.membershipIds.slice(0, 3).entries()) {
+    // Index 0 is the owner, already joined by create_circle. Two more accept,
+    // which is three of four — one short.
+    for (const index of [1, 2]) {
       await actAs(db, circle.userIds[index]!);
-      await db.query(`select accept_invite($1, $2)`, [`short-join-${index}`, membershipId]);
+      await db.query(`select accept_invite($1, $2)`, [
+        `short-join-${index}`,
+        circle.membershipIds[index]!,
+      ]);
     }
     await actAs(db, circle.ownerId);
 
@@ -537,11 +559,13 @@ describe('replayed requests are no-ops', () => {
     ]);
     const userId = await newUserId(db);
 
-    const a = await scalar<string>(db, `select invite_member($1,$2,$3,$4) as v`, ['inv', circleId, userId, 1]);
-    const b = await scalar<string>(db, `select invite_member($1,$2,$3,$4) as v`, ['inv', circleId, userId, 1]);
+    // Position 2: the owner already holds position 1 since 0009.
+    const a = await scalar<string>(db, `select invite_member($1,$2,$3,$4) as v`, ['inv', circleId, userId, 2]);
+    const b = await scalar<string>(db, `select invite_member($1,$2,$3,$4) as v`, ['inv', circleId, userId, 2]);
 
     expect(b).toBe(a);
-    expect(await scalar<number>(db, `select count(*)::int as v from memberships`)).toBe(1);
+    // The owner plus the one invitee — the replay added nobody.
+    expect(await scalar<number>(db, `select count(*)::int as v from memberships`)).toBe(2);
   });
 
   it('replays a confirmation without posting money twice', async () => {

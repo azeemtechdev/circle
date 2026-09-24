@@ -130,14 +130,21 @@ describe('replaying a request is a no-op', () => {
     });
     expect(await countCircles()).toBe(1);
 
-    // invite_member, three times
-    const memberships: string[] = [];
-    for (const [i, userId] of [owner, bob, carol].entries()) {
+    // The owner is enrolled at position 1 by create_circle (0009), so the
+    // invites start at position 2. Index 0 below is the owner's membership,
+    // which nobody invited and nobody has to accept.
+    const ownerMembership = await db.query<{ id: string }>(
+      `select id from memberships where circle_id = $1 and user_id = $2`,
+      [circleId, owner],
+    );
+    const memberships: string[] = [ownerMembership.rows[0]!.id];
+
+    for (const [i, userId] of [bob, carol].entries()) {
       memberships.push(
         await run(parseInviteMember, (x) => service.inviteMember(x), `k-invite-${i}`, {
           circleId,
           userId,
-          payoutPosition: i + 1,
+          payoutPosition: i + 2,
         }),
       );
     }
@@ -146,11 +153,11 @@ describe('replaying a request is a no-op', () => {
     );
     expect(membershipCount.rows[0]!.n, 'replays created extra memberships').toBe(3);
 
-    // accept_invite — each member accepts their own
-    for (const [i, userId] of [owner, bob, carol].entries()) {
+    // accept_invite — everyone but the owner, who is already joined.
+    for (const [i, userId] of [bob, carol].entries()) {
       await actAs(db, userId);
       await run(parseAcceptInvite, (x) => service.acceptInvite(x), `k-accept-${i}`, {
-        membershipId: memberships[i]!,
+        membershipId: memberships[i + 1]!,
       });
     }
 
@@ -323,6 +330,38 @@ describe('Postgres errors become the right status', () => {
 
     expect(response.status).toBe(403);
     expect(await errorOf(response)).toBe('only the circle owner may cancel it');
+  });
+
+  it('explains a duplicate instead of naming the constraint', async () => {
+    const owner = await newUserId(db);
+    await actAs(db, owner);
+    const circleId = await idOf(await createCircle('k-dup'));
+
+    // The owner already holds position 1 since 0009, so this is exactly what a
+    // person hits by inviting someone into the first slot.
+    const response = await handleTransition(
+      post({ circleId, userId: await newUserId(db), payoutPosition: 1 }, 'k-dup-2'),
+      { parse: parseInviteMember, run: (i) => service.inviteMember(i) },
+    );
+
+    expect(response.status).toBe(409);
+    const message = await errorOf(response);
+    expect(message).toBe('Somebody already has that position in the rotation.');
+    expect(message).not.toMatch(/duplicate key|constraint|memberships_/);
+  });
+
+  it('explains inviting somebody who is already a member', async () => {
+    const owner = await newUserId(db);
+    await actAs(db, owner);
+    const circleId = await idOf(await createCircle('k-self'));
+
+    const response = await handleTransition(
+      post({ circleId, userId: owner, payoutPosition: 2 }, 'k-self-2'),
+      { parse: parseInviteMember, run: (i) => service.inviteMember(i) },
+    );
+
+    expect(response.status).toBe(409);
+    expect(await errorOf(response)).toBe('That person is already in this circle.');
   });
 
   it('does not leak the internals of an error it did not plan for', async () => {

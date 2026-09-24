@@ -133,8 +133,28 @@ function cleanMessage(message: string): string {
     return 'You need to be signed in to do that.';
   }
 
+  // A unique violation reaches here as "duplicate key value violates unique
+  // constraint "memberships_one_per_position"" — a constraint name is not
+  // something to show a person. Each of these is a thing they can actually
+  // understand and act on.
+  for (const [constraint, explanation] of Object.entries(CONSTRAINT_MESSAGES)) {
+    if (withoutPrefix.includes(constraint)) return explanation;
+  }
+
+  if (/duplicate key value violates/i.test(withoutPrefix)) {
+    return 'That has already been added.';
+  }
+
   return withoutPrefix;
 }
+
+const CONSTRAINT_MESSAGES: Record<string, string> = {
+  memberships_one_per_user_per_circle: 'That person is already in this circle.',
+  memberships_one_per_position: 'Somebody already has that position in the rotation.',
+  contributions_one_per_payer_per_round: 'That payment has already been recorded for this round.',
+  rounds_one_payout_per_member: 'That member is already due to collect in another round.',
+  profiles_phone_unique: 'That phone number is already registered to another account.',
+};
 
 function problem(status: number, message: string): Response {
   return Response.json({ error: message }, { status });

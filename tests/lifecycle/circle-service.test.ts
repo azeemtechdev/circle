@@ -91,9 +91,10 @@ describe('CircleService drives a whole circle through the ledger', () => {
       memberTarget: MEMBERS,
     });
 
-    const userIds: string[] = [];
-    for (let position = 1; position <= MEMBERS; position += 1) {
-      const userId = position === 1 ? ownerId : await newUserId(db);
+    // The owner already holds position 1, joined, since 0009.
+    const userIds: string[] = [ownerId];
+    for (let position = 2; position <= MEMBERS; position += 1) {
+      const userId = await newUserId(db);
       userIds.push(userId);
 
       await actAs(db, ownerId);

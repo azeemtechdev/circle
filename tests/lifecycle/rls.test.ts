@@ -60,14 +60,7 @@ describe('RLS scopes every read to your own circles', () => {
       ])
     ).rows[0]!.v;
 
-    const aliceMembership = (
-      await db.query<{ v: string }>(`select invite_member($1,$2,$3,$4) as v`, [
-        'a-inv-1',
-        aliceCircle,
-        aliceId,
-        1,
-      ])
-    ).rows[0]!.v;
+    // Alice is enrolled at position 1 by create_circle since 0009.
     const bobMembership = (
       await db.query<{ v: string }>(`select invite_member($1,$2,$3,$4) as v`, [
         'a-inv-2',
@@ -77,8 +70,6 @@ describe('RLS scopes every read to your own circles', () => {
       ])
     ).rows[0]!.v;
 
-    await actAs(db, aliceId);
-    await db.query(`select accept_invite($1,$2)`, ['a-join-1', aliceMembership]);
     await actAs(db, bobId);
     await db.query(`select accept_invite($1,$2)`, ['a-join-2', bobMembership]);
 
@@ -97,14 +88,6 @@ describe('RLS scopes every read to your own circles', () => {
         2,
       ])
     ).rows[0]!.v;
-    const sm1 = (
-      await db.query<{ v: string }>(`select invite_member($1,$2,$3,$4) as v`, [
-        's-inv-1',
-        strangerCircle,
-        strangerId,
-        1,
-      ])
-    ).rows[0]!.v;
     const sm2 = (
       await db.query<{ v: string }>(`select invite_member($1,$2,$3,$4) as v`, [
         's-inv-2',
@@ -113,8 +96,6 @@ describe('RLS scopes every read to your own circles', () => {
         2,
       ])
     ).rows[0]!.v;
-    await actAs(db, strangerId);
-    await db.query(`select accept_invite($1,$2)`, ['s-join-1', sm1]);
     await actAs(db, otherUser);
     await db.query(`select accept_invite($1,$2)`, ['s-join-2', sm2]);
     await actAs(db, strangerId);

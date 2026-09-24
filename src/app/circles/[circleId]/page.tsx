@@ -212,7 +212,12 @@ export default async function CirclePage({ params }: PageProps<'/circles/[circle
       {isOwner && (circle.status === 'draft' || circle.status === 'inviting') ? (
         <section className="flex flex-col gap-4 border-t border-black/10 pt-4 dark:border-white/15">
           {nextPosition ? (
-            <InviteForm circleId={circle.id} nextPosition={nextPosition} />
+            <InviteForm
+              circleId={circle.id}
+              nextPosition={nextPosition}
+              currentUserId={user.id}
+              memberUserIds={members.map((m) => m.user_id)}
+            />
           ) : (
             <p className="text-sm opacity-70">Every position is filled.</p>
           )}
