@@ -13,10 +13,12 @@ outside the app. Circle is the ledger, the referee, and the reminder brain.
 - **What to build, and in what order:** [docs/PLAN.md](docs/PLAN.md)
 - **How the system fits together:** [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 - **Standing orders for coding sessions:** [CLAUDE.md](CLAUDE.md)
-- **Per-phase build logs:** [docs/phases/](docs/phases/)
-- **Architectural decisions:** [docs/DECISIONS.md](docs/DECISIONS.md)
+- **Per-phase build logs:** [docs/phases/](docs/phases/) — Phase 0 only; discontinued after that, see below
+- **Architectural decisions:** [docs/DECISIONS.md](docs/DECISIONS.md) — ADR-0001 to ADR-0010, all Phase 0
 
-Current phase: **Phase 0 — skeleton & guardrails.**
+Current phase: **Phase 3 — PWA screens.** The database layer (ledger, circle lifecycle, authorization, RLS) is complete and tested; auth wiring, API routes and UI are not built yet.
+
+Phase logs, ADRs and the changelog were discontinued on 2026-09-24 — `git log` is the project's record from Phase 1 onward, and the docs above are stale past Phase 0. See [CLAUDE.md](CLAUDE.md), "Documentation".
 
 ---
 

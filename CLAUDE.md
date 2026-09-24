@@ -5,10 +5,10 @@ You are building **Circle**, a digitized rotating-savings (ajo/esusu) app. This 
 ## Session ritual (every session, no exceptions)
 
 1. Read `PLAN.md` §7 to identify the **current phase** (the first phase whose acceptance criteria are not yet met).
-2. Read `docs/phases/PHASE-XX.md` for that phase (create it from the template below if it doesn't exist).
+2. Read `git log` for the recent history of that phase. It is the project's record — see "Documentation" below.
 3. State the plan for this session in 2–4 bullets BEFORE coding. Wait for confirmation only if the plan deviates from PLAN.md.
 4. Work ONLY within the current phase. If you discover work belonging to a later phase, add a TODO to that phase's section in PLAN.md — do not build it now.
-5. Before ending: update the phase log, update `CHANGELOG.md`, run the test suite, and report status honestly (including anything broken or unfinished).
+5. Before ending: run the test suite and report status honestly (including anything broken or unfinished).
 
 ## Hard rules — money & data (violating these is never acceptable)
 
@@ -29,42 +29,25 @@ You are building **Circle**, a digitized rotating-savings (ajo/esusu) app. This 
 - Simple > clever. This codebase must be explainable in a job interview.
 - **Free-tier awareness:** weekly keep-alive Action for Supabase; delays between eval cases (LLM rate limits); assume cold starts (no in-memory state between requests).
 
-## Documentation duties (this is how the human debugs later)
+## Documentation — the commit message IS the documentation
 
-**`docs/phases/PHASE-XX.md`** — update EVERY session, using this template:
+**Phase logs, ADRs and CHANGELOG entries are discontinued** (decided 2026-09-24). Do not write or update `docs/phases/PHASE-XX.md`, `docs/DECISIONS.md` or `CHANGELOG.md` unless explicitly asked. The ritual cost more than it returned: Phases 1–3 shipped without it anyway, which left a gate nobody could pass and three docs contradicting each other.
 
-```markdown
-# Phase XX — <name from PLAN.md>
-Status: in progress | done
-Started: <date>   Completed: <date>
+The existing files stay as a historical record of Phase 0. They are **not** backfilled, and they are stale past Phase 0 — trust `git log` over them.
 
-## Goal
-<copy from PLAN.md>
+Because the commit message is now the only record, it carries the weight the phase log used to:
 
-## What was built
-- `path/to/file.ts` — one-line purpose
-  (every file created or meaningfully changed, grouped by session date)
+- Explain **why**, not just what. A diff already shows what changed.
+- Record any architectural decision and the alternative you rejected.
+- Record bugs as symptom → root cause → fix, and name the regression test.
+- Note anything deliberately left undone, and why.
+- Keep commits small and single-purpose (`phase-2: contribution claim endpoint + idempotency test`). A commit nobody can read is now a fact nobody can recover.
 
-## Decisions
-- <decision> — <why> (especially any deviation from PLAN.md, which must also be reflected back into PLAN.md)
-
-## How to test
-- exact commands, e.g. `npm test -- ledger` / manual steps
-
-## Bugs found & fixed
-- Symptom → root cause → fix → regression test added (file + test name)
-
-## Known issues / TODOs
-- honest list; nothing hidden
-```
-
-**`docs/DECISIONS.md`** — append a 3-line mini-ADR for every architectural choice (context / decision / consequence).
-
-**`CHANGELOG.md`** — one line per meaningful change, newest first, prefixed with the phase.
+`PLAN.md` and `ARCHITECTURE.md` stay authoritative for WHAT and HOW, and are still worth correcting when they go wrong.
 
 ## When something breaks
 
-Follow the debugging map in `ARCHITECTURE.md` §7 (events → ledger → reconciliation → logs → phase docs). When you find a bug: (1) reproduce it in a failing test FIRST, (2) fix it, (3) record symptom → root cause → fix in the phase log. Never fix a money bug by editing data; fix code and post reversing entries if the ledger was affected.
+Follow the debugging map in `ARCHITECTURE.md` §7 (events → ledger → reconciliation → logs). When you find a bug: (1) reproduce it in a failing test FIRST, (2) fix it, (3) record symptom → root cause → fix in the commit message. Never fix a money bug by editing data; fix code and post reversing entries if the ledger was affected.
 
 ## Honesty clause
 

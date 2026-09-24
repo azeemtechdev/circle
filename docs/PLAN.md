@@ -102,7 +102,9 @@ These are the rules that make this project resume-worthy. Every one gets automat
 
 ## 7. Phases
 
-> **Phase discipline:** work on ONE phase at a time. A phase is done when its acceptance criteria pass AND its phase log exists (see §8). Do not start phase N+1 with phase N incomplete.
+> **Phase discipline:** work on ONE phase at a time. A phase is done when its acceptance criteria pass. Do not start phase N+1 with phase N incomplete.
+>
+> The phase-log half of this gate was dropped on 2026-09-24 along with the rest of the documentation ritual — see CLAUDE.md, "Documentation". Acceptance criteria are still the gate; the commit message is the record.
 
 ### Phase 0 — Skeleton & guardrails (Week 1)
 - Next.js app scaffold, Supabase project connected, CI running lint + typecheck + tests
@@ -158,6 +160,8 @@ These are the rules that make this project resume-worthy. Every one gets automat
 ---
 
 ## 8. Documentation & Debugging Workflow (how we know what the code did)
+
+> **Discontinued 2026-09-24.** The three artifacts below are no longer written or updated. They cover Phase 0 and are stale past it; `git log` is the record from Phase 1 onward, and the commit message now carries what the phase log used to. See CLAUDE.md, "Documentation". The debugging backbone below is unaffected and still applies.
 
 **Per-phase logs — `docs/phases/PHASE-XX.md`** (created when a phase starts, updated every session):
 - **Goal** (from this plan) · **What was built** (files created/changed, with one-line purpose each) · **Decisions made** (and why — especially deviations from plan) · **How to test it** (exact commands) · **Known issues / TODOs** · **Bugs found & fixed** (symptom → root cause → fix → regression test added)
