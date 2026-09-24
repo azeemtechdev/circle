@@ -39,30 +39,40 @@ export function InviteForm({
 
   async function lookUp(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (pending) return;
+
     setPending(true);
     setError(null);
     setFound(null);
 
-    const supabase = createSupabaseBrowserClient();
-    const { data, error: rpcError } = await supabase.rpc('find_profile_by_phone', {
-      p_phone: phone,
-    });
+    // try/finally, not a bare await: anything that throws before setPending
+    // ran again would leave the button reading "Looking…" forever, with no
+    // error shown and nothing to retry. A stuck spinner is the worst failure
+    // mode here, because it looks like the app is still working.
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const { data, error: rpcError } = await supabase.rpc('find_profile_by_phone', {
+        p_phone: phone,
+      });
 
-    setPending(false);
+      if (rpcError) {
+        setError(rpcError.message);
+        return;
+      }
 
-    if (rpcError) {
-      setError(rpcError.message);
-      return;
+      const rows = (data ?? []) as Found[];
+      if (rows.length === 0) {
+        setError(
+          'Nobody with that number has a Circle account yet. Ask them to sign up first, then invite them.',
+        );
+        return;
+      }
+      setFound(rows[0]!);
+    } catch (cause) {
+      setError((cause as Error).message || 'Could not look that number up. Try again.');
+    } finally {
+      setPending(false);
     }
-
-    const rows = (data ?? []) as Found[];
-    if (rows.length === 0) {
-      setError(
-        'Nobody with that number has a Circle account yet. Ask them to sign up first, then invite them.',
-      );
-      return;
-    }
-    setFound(rows[0]!);
   }
 
   async function invite() {
