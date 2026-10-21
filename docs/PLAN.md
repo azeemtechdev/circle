@@ -132,12 +132,18 @@ These are the rules that make this project resume-worthy. Every one gets automat
 - Design for the least technical relative: big buttons, no jargon, works on low-end Android
 - Payout account details (added 2026-10-21): each member enters their bank details once; the pay screen shows the current recipient's details with a copy button, tells the payer to check the account name in their bank app, and warns when the details changed in the last 7 days. If the recipient has not entered any, the screen says so — nothing blocks. Circle still never moves money.
 - **Accept:** a non-technical tester completes a fake round without help.
+- Remaining before this phase is done (as of 2026-10-21):
+  - Apply `supabase/migrations/0010_payout_accounts.sql` to the live project (SQL Editor; there is no runner). Until then the Me screen and the pay sheet fail to load.
+  - Walk the signed-in screens on a real phone (Home, circle, pay/dispute sheets, Start, Activity, Me) in light and dark. Only the signed-out screens have been checked visually.
+  - Run the acceptance test above with a real non-technical tester.
+- Known UI gaps, deliberately left: no "forgot password" (no reset flow exists); sign-up confirmation is by email link, not a code (an email code needs `{{ .Token }}` in the Supabase confirm-signup template); no invite-by-link (invites are by phone).
 
 ### Phase 4 — Notifications: Telegram bot + email/push (Week 6)
 - Telegram bot: link account, reminder messages, payout-day alerts
 - GitHub Actions cron triggers reminder checks
 - notifications_log records everything sent
 - **Accept:** reminder fires for an unpaid contribution near deadline; log row created.
+- TODO (from Phase 3 restyle): the Me screen has a "Reminders on Telegram — Not available yet" row. Turn it into the real link-your-account flow.
 
 ### Phase 5 — AI reminder agent + eval harness (Weeks 7–8)
 - Gemini-composed reminders behind a template fallback (if LLM fails, plain template sends — notifications never break)
@@ -153,6 +159,7 @@ These are the rules that make this project resume-worthy. Every one gets automat
 ### Phase 7 — Trust score v1 + polish (Week 10)
 - Rules-based score + AI explanation; profile display
 - **Accept:** scores match hand-computed values on test fixtures.
+- TODO (from Phase 3 restyle): the Me screen already has the trust score card and the On time / Late stats, showing "–" and "Not available yet". Fill them from the real score and its AI explanation (with a non-LLM fallback); never show a number before it is computed.
 
 ### Phase 8 — Real pilot + writeup (Weeks 11–12)
 - Run one real circle: 5 friends, ₦1,000/month equivalent (real bank transfers, app as ledger)

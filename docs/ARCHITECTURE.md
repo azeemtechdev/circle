@@ -131,6 +131,7 @@ erDiagram
     MEMBERSHIPS ||--o{ CONTRIBUTIONS : pays
     CONTRIBUTIONS ||--o{ LEDGER_ENTRIES : posts
     CONTRIBUTIONS ||--o| DISPUTES : "may raise"
+    USERS ||--o| PAYOUT_ACCOUNTS : "gets paid at"
     USERS {
         uuid id PK
         string name
@@ -181,9 +182,18 @@ erDiagram
         string status
         text ai_summary
     }
+    PAYOUT_ACCOUNTS {
+        uuid user_id PK
+        string bank_name
+        string account_number
+        string account_name
+        timestamptz updated_at
+    }
 ```
 
 Supporting tables (not shown): `events` (audit backbone), `notifications_log`, `llm_traces`, `accounts`.
+
+`PAYOUT_ACCOUNTS` (migration 0010) holds where a member wants to be paid: bank name, 10-digit account number (text), owner-typed account name, `created_at`, `updated_at`. It is display data for the pay screen, not part of the ledger — no money moves through it. Readable by yourself and by people who have **joined** a circle with you; written only through `set_my_payout_account()`, which takes no user id. Every add/change writes an `events` row (last four digits only); a change within 7 days triggers a warning on the payer's screen.
 
 ---
 
