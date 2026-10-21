@@ -142,6 +142,132 @@ export async function getPayoutAccount(userId: string): Promise<PayoutAccount | 
   return (data as PayoutAccount | null) ?? null;
 }
 
+// ---------------------------------------------------------------------------
+// Batched reads for the home screen and the activity feed.
+//
+// The home screen shows every circle at once, so these fetch across all the
+// caller's circles in one query each instead of one per circle. Still no user
+// filter: RLS decides which circles "all" means.
+// ---------------------------------------------------------------------------
+
+/** Every round not yet closed, across every circle you can see. */
+export async function listUnclosedRounds(): Promise<CircleRound[]> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from('circle_rounds')
+    .select('*')
+    .neq('status', 'closed')
+    .order('round_number');
+
+  if (error) throw new Error(`Could not load the rounds: ${error.message}`);
+  return (data ?? []) as CircleRound[];
+}
+
+export async function listContributionsForRounds(
+  roundIds: string[],
+): Promise<RoundContribution[]> {
+  if (roundIds.length === 0) return [];
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from('round_contributions')
+    .select('*')
+    .in('round_id', roundIds)
+    .order('payer_name');
+
+  if (error) throw new Error(`Could not load who has paid: ${error.message}`);
+  return (data ?? []) as RoundContribution[];
+}
+
+export async function listMembersOfCircles(circleIds: string[]): Promise<CircleMember[]> {
+  if (circleIds.length === 0) return [];
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from('circle_members')
+    .select('*')
+    .in('circle_id', circleIds)
+    .order('payout_position');
+
+  if (error) throw new Error(`Could not load the members: ${error.message}`);
+  return (data ?? []) as CircleMember[];
+}
+
+export interface CircleEvent {
+  id: string;
+  entity_type: string;
+  entity_id: string;
+  event_type: string;
+  actor_id: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+}
+
+/**
+ * The newest entries in the audit log that you are allowed to see.
+ *
+ * The `events` policy from migration 0004 scopes rows to entities in your own
+ * circles; that is the only filter. Read-only, like everything in this file.
+ */
+export async function listRecentEvents(limit = 40): Promise<CircleEvent[]> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from('events')
+    .select('id, entity_type, entity_id, event_type, actor_id, metadata, created_at')
+    .in('entity_type', ['circle', 'membership', 'round', 'contribution'])
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (error) throw new Error(`Could not load recent activity: ${error.message}`);
+  return (data ?? []) as CircleEvent[];
+}
+
+export async function listContributionsById(ids: string[]): Promise<RoundContribution[]> {
+  if (ids.length === 0) return [];
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from('round_contributions')
+    .select('*')
+    .in('contribution_id', ids);
+
+  if (error) throw new Error(`Could not load payments: ${error.message}`);
+  return (data ?? []) as RoundContribution[];
+}
+
+export async function listRoundsById(ids: string[]): Promise<CircleRound[]> {
+  if (ids.length === 0) return [];
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.from('circle_rounds').select('*').in('round_id', ids);
+
+  if (error) throw new Error(`Could not load the rounds: ${error.message}`);
+  return (data ?? []) as CircleRound[];
+}
+
+export async function listMembershipsById(ids: string[]): Promise<CircleMember[]> {
+  if (ids.length === 0) return [];
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from('circle_members')
+    .select('*')
+    .in('membership_id', ids);
+
+  if (error) throw new Error(`Could not load the members: ${error.message}`);
+  return (data ?? []) as CircleMember[];
+}
+
+/** Display names for the people named in the feed (profiles policy, 0004). */
+export async function listNames(userIds: string[]): Promise<Map<string, string>> {
+  if (userIds.length === 0) return new Map();
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, display_name')
+    .in('id', userIds);
+
+  if (error) throw new Error(`Could not load names: ${error.message}`);
+  return new Map(
+    ((data ?? []) as { id: string; display_name: string }[]).map((p) => [p.id, p.display_name]),
+  );
+}
+
 /**
  * The round people are actually looking at: the earliest one still open.
  * A completed circle has none, which is why this can return null.
