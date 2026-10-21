@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Circle</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F3F5F2;--bg2:#E4E9E5;--sf:#fff;--ink:#0D1B15;--mute:#62736A;--hair:#E3E8E4;--hero:#0F3B2C;--brand:#165A43;--bi:#fff;--lime:#BDF26D;--ok:#1C8A62;--okb:#E1F5EB;--wait:#A86A0A;--waitb:#FDF0D2;--bad:#CF4529;--badb:#FCE6E1;box-sizing:border-box}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#09120E;--bg2:#040A07;--sf:#111E18;--ink:#EAF2EE;--mute:#8FA398;--hair:#1F2F27;--hero:#0B2A20;--brand:#BDF26D;--bi:#0B2A20;--ok:#5BD6A0;--okb:#14352A;--wait:#F2BE5C;--waitb:#33290F;--bad:#F2907A;--badb:#3A1F19;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#09120E;--bg2:#040A07;--sf:#111E18;--ink:#EAF2EE;--mute:#8FA398;--hair:#1F2F27;--hero:#0B2A20;--brand:#BDF26D;--bi:#0B2A20;--ok:#5BD6A0;--okb:#14352A;--wait:#F2BE5C;--waitb:#33290F;--bad:#F2907A;--badb:#3A1F19;color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.45 "Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;display:flex;justify-content:center;-webkit-font-smoothing:antialiased}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--lime);outline-offset:2px;box-shadow:0 0 0 5px var(--hero)}
+#shell{position:relative;width:100%;max-width:430px;height:100%;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+@media (min-width:520px){body{align-items:center;background:var(--bg2)}#shell{height:min(860px,calc(100% - 40px));border-radius:40px;box-shadow:0 40px 90px -30px rgba(0,0,0,.45),0 0 0 1px var(--hair)}}
+#scr{flex:1;overflow-y:auto;overscroll-behavior:contain;padding-bottom:24px}
+#nav{display:none;background:var(--sf);border-top:1px solid var(--hair);padding:6px 10px calc(8px + env(safe-area-inset-bottom,0px))}
+#nav button{flex:1;border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;font-size:12px;font-weight:600;color:var(--mute)}
+#nav button[aria-current="page"]{color:var(--ink)}
+#nav button[aria-current="page"] svg{stroke:var(--ink);fill:var(--lime);fill-opacity:.9}
+.pad{padding:0 20px}
+h1,h2,.big{margin:0;letter-spacing:-.035em;line-height:1.05;font-weight:800}
+h1{font-size:34px}h2{font-size:26px}
+.sec{display:flex;justify-content:space-between;align-items:baseline;margin:26px 20px 12px}
+.sec b{font-size:18px;letter-spacing:-.02em}.sec span{color:var(--mute);font-size:14px;font-weight:500}
+.mute{color:var(--mute)}
+.hero{background:var(--hero);color:#fff;padding:calc(14px + env(safe-area-inset-top,0px)) 20px 28px;border-radius:0 0 30px 30px}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:22px}
+.bar .who{display:flex;align-items:center;gap:10px;font-weight:600;min-width:0}
+.ib{width:42px;height:42px;border-radius:50%;border:0;background:rgba(255,255,255,.12);color:#fff;display:grid;place-items:center;flex:none;position:relative}
+.ib i{position:absolute;top:10px;right:11px;width:9px;height:9px;border-radius:50%;background:var(--lime);box-shadow:0 0 0 2px var(--hero)}
+.hl{opacity:.75;font-size:15px;font-weight:500}
+.big{font-size:46px;margin:4px 0 6px}
+.hero p{margin:0 0 18px;opacity:.75;font-size:15px}
+.prog{height:8px;border-radius:4px;background:rgba(255,255,255,.18);overflow:hidden;margin:6px 0 10px}
+.prog i{display:block;height:100%;background:var(--lime);border-radius:4px}
+.btn{display:block;width:100%;border:0;border-radius:16px;padding:17px;font-weight:700;font-size:16px;background:var(--brand);color:var(--bi);text-align:center;transition:transform .1s}
+.btn:active{transform:scale(.98)}
+.btn.lime{background:var(--lime);color:#0F3B2C}
+.btn.gh{background:rgba(255,255,255,.1);color:#fff}
+.btn.ol{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--hair)}
+.btn.sm{width:auto;padding:11px 18px;font-size:14px;border-radius:12px}
+.btn.bd{background:var(--badb);color:var(--bad)}
+.card{background:var(--sf);border-radius:20px;padding:18px;margin:0 20px 12px;box-shadow:0 1px 0 var(--hair)}
+.cc{all:unset;display:block;box-sizing:border-box;width:calc(100% - 40px);margin:0 20px 12px;background:var(--sf);border-radius:20px;padding:18px;cursor:pointer;box-shadow:0 1px 0 var(--hair)}
+.cc:focus-visible{outline:3px solid var(--brand)}
+.r1{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.r1 b{font-size:18px;letter-spacing:-.02em}
+.r2{color:var(--mute);font-size:14px;margin:2px 0 14px}
+.r3{display:flex;align-items:center;justify-content:space-between;font-size:14px;font-weight:600}
+.chip{font-size:12.5px;font-weight:700;padding:5px 10px;border-radius:99px;white-space:nowrap;background:var(--hair);color:var(--mute)}
+.chip.ok{background:var(--okb);color:var(--ok)}.chip.wait{background:var(--waitb);color:var(--wait)}.chip.bad{background:var(--badb);color:var(--bad)}
+.av{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:15px;flex:none}
+.a0{background:#D7F0E3;color:#14684A}.a1{background:#FCE3C8;color:#9A4E0B}.a2{background:#DDE4FB;color:#3447A8}.a3{background:#F9DDE8;color:#A52A5C}.a4{background:#EBE0F8;color:#6B35A8}.a5{background:#FFF0B8;color:#7A5B00}
+.stack{display:flex}.stack .av{width:30px;height:30px;font-size:12px;margin-left:-8px;box-shadow:0 0 0 2px var(--sf)}.stack .av:first-child{margin-left:0}
+.row{display:flex;align-items:center;gap:12px;padding:13px 0;border-top:1px solid var(--hair)}
+.row:first-child{border-top:0}
+.nm{flex:1;min-width:0;font-weight:600}.nm small{display:block;font-weight:500;color:var(--mute);font-size:13px;line-height:1.3}
+.dot{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;flex:none;background:var(--hair);color:var(--mute)}
+.dot.ok{background:var(--okb);color:var(--ok)}.dot.wait{background:var(--waitb);color:var(--wait)}.dot.bad{background:var(--badb);color:var(--bad)}
+.dash{all:unset;display:flex;align-items:center;gap:12px;box-sizing:border-box;width:calc(100% - 40px);margin:0 20px;padding:16px 18px;border-radius:20px;border:1.5px dashed var(--hair);color:var(--mute);font-weight:600;cursor:pointer}
+.dash:focus-visible{outline:3px solid var(--brand)}
+.seg{display:flex;background:var(--hair);border-radius:14px;padding:4px;margin:20px 20px 14px}
+.seg button{flex:1;border:0;background:none;padding:10px;border-radius:11px;font-weight:700;font-size:14px;color:var(--mute)}
+.seg button[aria-pressed="true"]{background:var(--sf);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.up{margin-top:-18px;position:relative}
+label{display:block;font-weight:700;font-size:14px;margin:18px 0 8px}
+input{width:100%;padding:17px 16px;border-radius:14px;border:1.5px solid var(--hair);background:var(--sf);font-weight:500}
+input:focus{border-color:var(--brand);outline:0}
+.err{color:var(--bad);font-size:14px;font-weight:600;margin:12px 0 0;min-height:1px}
+.top{display:flex;align-items:center;gap:8px;padding:calc(14px + env(safe-area-inset-top,0px)) 14px 0}
+.bk{width:42px;height:42px;border-radius:50%;border:0;background:var(--hair);display:grid;place-items:center}
+.auth{padding:22px 20px}
+.dk{background:var(--hero);color:#fff;min-height:100%;display:flex;flex-direction:column;padding:calc(18px + env(safe-area-inset-top,0px)) 22px 24px}
+.dk .bk{background:rgba(255,255,255,.12);color:#fff}
+.lg{display:flex;align-items:center;gap:9px;font-weight:800;font-size:22px;letter-spacing:-.03em}
+.trust{font-size:13.5px;opacity:.7;text-align:center;margin:16px 0 0}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chips button{border:0;background:var(--hair);padding:11px 16px;border-radius:12px;font-weight:700;font-size:15px}
+.chips button[aria-pressed="true"]{background:var(--hero);color:#fff}
+.steps{display:flex;gap:6px;margin:18px 20px 0}.steps i{flex:1;height:4px;border-radius:2px;background:var(--hair)}.steps i.on{background:var(--brand)}
+.tl{list-style:none;margin:0;padding:0}
+.tl li{display:flex;align-items:center;gap:14px;padding:11px 0;font-weight:600}
+.tl em{margin-left:auto;font-style:normal;font-weight:500;color:var(--mute);font-size:14px}
+.num{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:700;background:var(--hair);color:var(--mute);flex:none}
+.num.ok{background:var(--ok);color:#fff}.num.now{background:var(--lime);color:#0F3B2C}
+.mv{display:flex;gap:6px;margin-left:auto}.mv button{width:34px;height:34px;border-radius:10px;border:0;background:var(--hair);display:grid;place-items:center}
+.otp{letter-spacing:.5em;text-align:center;font-size:28px;font-weight:700;padding-left:.5em}
+.menu{all:unset;display:flex;align-items:center;gap:14px;box-sizing:border-box;width:100%;padding:15px 0;border-top:1px solid var(--hair);font-weight:600;cursor:pointer}
+.menu:first-child{border-top:0}.menu:focus-visible{outline:3px solid var(--brand)}
+.menu span{flex:1}.menu small{color:var(--mute);font-weight:500}
+.score{display:flex;gap:16px;align-items:center}
+.sc{width:84px;height:84px;border-radius:50%;flex:none;display:grid;place-items:center;background:conic-gradient(var(--lime) 92%,rgba(255,255,255,.18) 0)}
+.sc span{width:66px;height:66px;border-radius:50%;background:var(--hero);display:grid;place-items:center;font-weight:800;font-size:26px}
+.stats{display:flex;margin-top:4px}.stats div{flex:1;text-align:center}.stats b{display:block;font-size:20px;letter-spacing:-.02em}.stats small{color:var(--mute);font-size:13px}
+#sheet{position:absolute;inset:0;display:none;align-items:flex-end;background:rgba(5,15,10,.55);z-index:10}
+.sh{background:var(--sf);width:100%;border-radius:28px 28px 0 0;padding:10px 20px calc(22px + env(safe-area-inset-bottom,0px));animation:up .22s ease-out;max-height:92%;overflow-y:auto}
+.sh::before{content:"";display:block;width:40px;height:4px;border-radius:2px;background:var(--hair);margin:0 auto 16px}
+@keyframes up{from{transform:translateY(30px);opacity:0}}
+.bank{background:var(--bg);border-radius:16px;padding:4px 16px;margin:16px 0}
+.bank .row{justify-content:space-between}.bank small{color:var(--mute);display:block;font-size:13px}
+.cp{border:0;background:var(--hair);border-radius:10px;padding:8px 12px;font-weight:700;font-size:13px;display:flex;gap:6px;align-items:center}
+.ai{font-size:13px;color:var(--mute);margin:12px 0 18px}
+#toast{position:absolute;left:16px;right:16px;bottom:90px;z-index:20;display:flex;justify-content:center;pointer-events:none}
+#toast div{background:var(--ink);color:var(--bg);padding:13px 18px;border-radius:14px;font-weight:600;font-size:14.5px;animation:up .2s}
+.ok2{text-align:center;padding:40px 20px 0}.tick{width:88px;height:88px;border-radius:50%;background:var(--lime);color:#0F3B2C;display:grid;place-items:center;margin:0 auto 20px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute"><symbol id="mk" viewBox="0 0 32 32"><circle cx="16" cy="16" r="11" fill="none" stroke="currentColor" stroke-width="5" stroke-dasharray="58 11.1" transform="rotate(-62 16 16)"/><circle cx="25.2" cy="6.9" r="3.6" fill="#BDF26D"/></symbol></svg>
+<div id="shell"><div id="scr"></div><nav id="nav" aria-label="Main"></nav><div id="sheet"></div><div id="toast" role="status"></div></div>
+<script>
+var $=function(i){return document.getElementById(i)};
+var N=function(x){return "₦"+x.toLocaleString("en-NG")};
+var AMT=50000,POT=250000;
+var S={v:"welcome",tab:"home",me:"Emeka",circle:0,ct:"m",sheet:null,step:1,c:{name:"Market Women Ajo",amt:20000,n:6,order:[]},mine:[],
+ M:[{n:"Ada",s:"ok",d:"Paid 21 Oct"},{n:"Tunde",s:"ok",d:"Paid 22 Oct"},{n:"Zainab",s:"wait",d:"Marked paid today, 9:12am"},{n:"Emeka",s:"bad",d:"No payment yet"},{n:"Bisi",s:"bad",d:"No payment yet"}],
+ A:[["Zainab marked ₦50,000 as paid","Family Ajo · 9:12am","wait"],["Tunde’s payment was confirmed","Family Ajo · Yesterday","ok"],["Ada’s payment was confirmed","Family Ajo · Tuesday","ok"],["October round is due 28 Oct","Family Ajo · Monday","bad"],["Tunde received ₦250,000","Family Ajo · 28 Sep","ok"]]};
+var P={home:'<path d="M3 11l9-8 9 8v9a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z"/>',plus:'<path d="M12 5v14M5 12h14"/>',bell:'<path d="M6 9a6 6 0 1112 0c0 6 2 7 2 7H4s2-1 2-7zM10 20a2 2 0 004 0"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/>',back:'<path d="M15 5l-7 7 7 7"/>',copy:'<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 012-2h9"/>',check:'<path d="M5 12l5 5 9-10"/>',chev:'<path d="M9 5l7 7-7 7"/>',act:'<path d="M3 12h4l3-8 4 16 3-8h4"/>',up:'<path d="M6 15l6-6 6 6"/>',dn:'<path d="M6 9l6 6 6-6"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',x:'<path d="M6 6l12 12M18 6L6 18"/>'};
+function ic(k,s){return '<svg viewBox="0 0 24 24" width="'+(s||22)+'" height="'+(s||22)+'" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+P[k]+'</svg>'}
+function av(n){return '<span class="av a'+((n.charCodeAt(0)+n.length)%6)+'">'+n[0]+'</span>'}
+function stack(a){return '<span class="stack">'+a.map(av).join("")+'</span>'}
+function chip(s){return '<span class="chip '+s+'">'+(s==="ok"?"Confirmed":s==="wait"?"Waiting":"Not paid")+'</span>'}
+function okn(){return S.M.filter(function(x){return x.s==="ok"}).length}
+function you(){return S.M.find(function(x){return x.n==="Emeka"})}
+function greet(){var h=new Date().getHours();return h<12?"Good morning":h<17?"Good afternoon":"Good evening"}
+function mark(c){return '<svg width="30" height="30" style="color:'+(c||"#fff")+'"><use href="#mk"/></svg>'}
+function ring(){var cs=[["#D7F0E3","#14684A"],["#FCE3C8","#9A4E0B"],["#BDF26D","#0F3B2C"],["#DDE4FB","#3447A8"],["#F9DDE8","#A52A5C"],["#EBE0F8","#6B35A8"]],nm="ATCEZB",s='<circle cx="120" cy="120" r="84" fill="none" stroke="#fff" stroke-opacity=".25" stroke-width="1.5" stroke-dasharray="2 7" stroke-linecap="round"/>';
+ for(var i=0;i<6;i++){var a=(-90+i*60)*Math.PI/180,x=(120+84*Math.cos(a)).toFixed(1),y=(120+84*Math.sin(a)).toFixed(1),t=i===2;
+  s+='<circle cx="'+x+'" cy="'+y+'" r="'+(t?25:21)+'" fill="'+cs[i][0]+'"'+(t?' stroke="#fff" stroke-opacity=".3" stroke-width="6"':'')+'/><text x="'+x+'" y="'+(+y+5)+'" text-anchor="middle" font-size="15" font-weight="700" fill="'+cs[i][1]+'">'+nm[i]+'</text>'}
+ s+='<text x="120" y="112" text-anchor="middle" font-size="12" fill="#fff" fill-opacity=".7">October pot</text><text x="120" y="141" text-anchor="middle" font-size="28" font-weight="800" fill="#fff">₦250,000</text>';
+ return '<svg viewBox="0 0 240 240" style="width:100%;max-width:270px;display:block;margin:0 auto" role="img" aria-label="Six members around a circle, one receiving the pot">'+s+'</svg>'}
+/* auth */
+function welcome(){return '<div class="dk"><div class="lg">'+mark()+'Circle</div><div style="flex:1;display:flex;align-items:center;padding:14px 0">'+ring()+'</div><h1>Ajo and esusu, with books that keep themselves.</h1><p style="opacity:.78;margin:12px 0 22px;font-size:16px">Everyone sees who has paid, whose turn it is, and what is owed.</p><button class="btn lime" data-a="go:su">Create an account</button><button class="btn gh" style="margin-top:10px" data-a="go:si">Sign in</button><p class="trust">Money moves between you in your bank app. Circle never touches it. It only keeps the record.</p></div>'}
+function back(t){return '<div class="top"><button class="bk" data-a="go:'+t+'" aria-label="Back">'+ic("back")+'</button></div>'}
+function signup(){return back("welcome")+'<div class="auth"><h1>Create your account</h1><p class="mute" style="margin:8px 0 0">Takes a minute. Then start a circle or join one.</p><label for="n">Full name</label><input id="n" autocomplete="name" placeholder="Chioma Okafor"><label for="p">Phone number</label><input id="p" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="0803 123 4567"><label for="w">Password</label><input id="w" type="password" autocomplete="new-password" placeholder="At least 8 characters"><p class="err" id="er"></p><button class="btn" style="margin-top:20px" data-a="su">Continue</button><p class="mute" style="font-size:13.5px;text-align:center;margin:16px 0 0">By continuing you agree to the Terms and Privacy Policy.</p><p style="text-align:center;margin:20px 0 0" class="mute">Have an account? <b style="color:var(--ink);cursor:pointer" data-a="go:si" tabindex="0" role="link">Sign in</b></p></div>'}
+function signin(){return back("welcome")+'<div class="auth"><h1>Welcome back</h1><p class="mute" style="margin:8px 0 0">Sign in to see your circles.</p><label for="i">Phone number or email</label><input id="i" autocomplete="username" placeholder="0803 123 4567"><label for="w">Password</label><input id="w" type="password" autocomplete="current-password"><p class="err" id="er"></p><p style="text-align:right;margin:12px 0 0"><b style="cursor:pointer;color:var(--brand)" data-a="toast:Reset code sent" tabindex="0" role="button">Forgot password?</b></p><button class="btn" style="margin-top:14px" data-a="si">Sign in</button><p style="text-align:center;margin:20px 0 0" class="mute">New here? <b style="color:var(--ink);cursor:pointer" data-a="go:su" tabindex="0" role="link">Create an account</b></p></div>'}
+function otp(){return back("su")+'<div class="auth"><h1>Check your phone</h1><p class="mute" style="margin:8px 0 22px">We sent a 6-digit code to '+(S.ph||"your number")+'.</p><input id="o" class="otp" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="······" aria-label="6-digit code"><p class="err" id="er"></p><button class="btn" style="margin-top:20px" data-a="otp">Verify</button><p style="text-align:center;margin:20px 0 0" class="mute">Didn’t get it? <b style="color:var(--ink);cursor:pointer" data-a="toast:New code sent" tabindex="0" role="button">Send again</b></p></div>'}
+/* home */
+function home(){var ch=S.me==="Chioma",y=you(),h;
+ if(ch)h='<div class="hl">Family Ajo · October</div><div class="big">'+N(POT)+'</div><p>You receive on Wed 28 Oct</p><div class="prog"><i style="width:'+okn()*20+'%"></i></div><p style="margin:0 0 16px">'+okn()+' of 5 confirmed</p><button class="btn lime" data-a="open">Review payments</button>';
+ else if(y.s==="bad")h='<div class="hl">Pay Chioma by Wed 28 Oct</div><div class="big">'+N(AMT)+'</div><p>Family Ajo · October round</p><button class="btn lime" data-a="pay">Pay now</button>';
+ else if(y.s==="wait")h='<div class="hl">Family Ajo · October</div><div class="big" style="font-size:30px">Waiting for Chioma</div><p>You marked '+N(AMT)+' as paid. We’ll tell you when she confirms.</p><button class="btn gh" data-a="open">View circle</button>';
+ else h='<div class="hl">You’re paid up</div><div class="big">'+N(POT)+'</div><p>Your payout arrives on Sat 28 Nov</p><button class="btn gh" data-a="open">View circle</button>';
+ var cs=S.mine.map(function(c){return '<button class="cc" data-a="toast:Invites are out. Waiting for members."><div class="r1"><b>'+c.name+'</b><span class="chip">1 of '+c.n+' joined</span></div><div class="r2">'+N(c.amt)+' monthly · Not started</div><div class="r3">'+stack(["Emeka"])+'<span>Pot '+N(c.amt*(c.n-1))+'</span></div></button>'}).join("");
+ return '<div class="hero"><div class="bar"><div class="who">'+av(S.me)+'<span>'+greet()+', '+S.me+'</span></div><button class="ib" aria-label="Notifications" data-a="tab:act">'+ic("bell")+'<i></i></button></div>'+h+'</div>'+
+ '<div class="sec"><b>Your circles</b><span>'+(2+S.mine.length)+' active</span></div>'+cs+
+ '<button class="cc" data-a="open"><div class="r1"><b>Family Ajo</b>'+(ch?'<span class="chip wait">'+okn()+' of 5 paid</span>':chip(y.s))+'</div><div class="r2">Round 3 of 6 · '+N(AMT)+' monthly</div><div class="r3">'+stack(["Ada","Tunde","Chioma","Emeka","Zainab","Bisi"])+'<span>Chioma receives '+N(POT)+'</span></div></button>'+
+ '<button class="cc" data-a="toast:Demo only"><div class="r1"><b>Office Esusu</b><span class="chip ok">Paid up</span></div><div class="r2">Round 1 of 8 · ₦20,000 monthly</div><div class="r3">'+stack(["Kemi","Dayo","Femi","Emeka"])+'<span>You receive in round 6</span></div></button>'+
+ '<button class="dash" data-a="tab:new"><span class="dot ok" style="background:var(--okb)">'+ic("plus")+'</span>Start a new circle</button>'+
+ '<div class="sec"><b>Recent</b><span style="cursor:pointer" data-a="tab:act" tabindex="0" role="link">See all</span></div><div class="card" style="padding:4px 18px">'+S.A.slice(0,3).map(actRow).join("")+'</div>'}
+function actRow(a){return '<div class="row"><span class="dot '+a[2]+'">'+ic(a[2]==="ok"?"check":a[2]==="wait"?"clock":"bell",18)+'</span><span class="nm">'+a[0]+'<small>'+a[1]+'</small></span></div>'}
+function activity(){return '<div class="pad" style="padding-top:calc(22px + env(safe-area-inset-top,0px))"><h1>Activity</h1><p class="mute" style="margin:6px 0 18px">Every payment and confirmation, in order.</p></div><div class="card" style="padding:4px 18px">'+S.A.map(actRow).join("")+'</div>'}
+/* circle */
+function detail(){var ch=S.me==="Chioma",y=you(),a,ok=okn();
+ if(ch){var c=S.M.filter(function(x){return x.s==="wait"});
+  a=c.length?c.map(function(x){return '<div class="card up"><b style="font-size:17px">'+x.n+' says '+N(AMT)+' was sent</b><p class="mute" style="margin:2px 0 14px;font-size:14.5px">Check your bank app before you confirm.</p><div style="display:flex;gap:10px"><button class="btn sm" style="flex:1" data-a="rcv:'+x.n+'">Received</button><button class="btn sm bd" style="flex:1" data-a="dsp:'+x.n+'">Not received</button></div></div>'}).join(""):'<div class="card up"><b>Nothing to confirm right now</b><p class="mute" style="margin:2px 0 0;font-size:14.5px">We’ll tell you when someone marks a payment.</p></div>'}
+ else if(y.s==="bad")a='<div class="card up"><b style="font-size:17px">You owe Chioma '+N(AMT)+'</b><p class="mute" style="margin:2px 0 14px;font-size:14.5px">Send it from your bank app, then tell us.</p><button class="btn" data-a="pay">Pay Chioma</button></div>';
+ else if(y.s==="wait")a='<div class="card up" style="background:var(--waitb)"><b style="font-size:17px;color:var(--wait)">Waiting for Chioma to confirm</b><p style="margin:2px 0 0;font-size:14.5px;color:var(--wait)">You marked '+N(AMT)+' as paid today.</p></div>';
+ else a='<div class="card up" style="background:var(--okb)"><b style="font-size:17px;color:var(--ok)">You’re paid up for October</b></div>';
+ var body;
+ if(S.ct==="m")body='<div class="card" style="padding:4px 18px">'+S.M.map(function(x){return '<div class="row">'+av(x.n)+'<span class="nm">'+x.n+(x.n==="Emeka"&&!ch?' (you)':'')+'<small>'+x.d+'</small></span>'+chip(x.s)+'</div>'}).join("")+'</div>';
+ else if(S.ct==="o")body='<div class="card"><ul class="tl">'+[["Ada","Aug",1],["Tunde","Sep",1],["Chioma","Oct",2],["Emeka","Nov",0],["Zainab","Dec",0],["Bisi","Jan",0]].map(function(r,i){return '<li><span class="num '+(r[2]===1?"ok":r[2]===2?"now":"")+'">'+(r[2]===1?ic("check",14):i+1)+'</span>'+r[0]+(r[0]==="Emeka"&&!ch?' (you)':'')+'<em>'+r[1]+'</em></li>'}).join("")+'</ul></div>';
+ else body='<div class="card"><p style="margin:0 0 12px"><b>Everyone pays '+N(AMT)+' on the 28th.</b></p><p class="mute" style="margin:0 0 12px">Each month one member receives the whole pot. Everyone receives once.</p><p class="mute" style="margin:0 0 12px">You pay each other directly in your bank apps. Circle never holds the money.</p><p class="mute" style="margin:0">If a payment is late, we remind the member. If a payment is disputed, both sides can add proof.</p></div>';
+ return '<div class="hero" style="padding-bottom:44px"><div class="bar"><button class="ib" data-a="close" aria-label="Back">'+ic("back")+'</button><b>Family Ajo</b><span style="width:42px"></span></div><div class="hl">Chioma receives · Round 3 of 6</div><div class="big">'+N(POT)+'</div><div class="prog"><i style="width:'+ok*20+'%"></i></div><div style="display:flex;justify-content:space-between;font-size:14px;opacity:.8"><span>'+ok+' of 5 confirmed</span><span>Due Wed 28 Oct</span></div></div>'+a+
+ '<div class="seg" role="group" aria-label="Circle details">'+[["m","Members"],["o","Order"],["r","Rules"]].map(function(t){return '<button data-a="ct:'+t[0]+'" aria-pressed="'+(S.ct===t[0])+'">'+t[1]+'</button>'}).join("")+'</div>'+body}
+/* create */
+function create(){var c=S.c,s=S.step;
+ if(s===4)return '<div class="ok2"><div class="tick">'+ic("check",42)+'</div><h1>'+c.name+' is ready</h1><p class="mute" style="margin:10px 0 22px">Share this link. People join, then everyone can see the circle.</p><div class="card" style="margin:0 0 14px;display:flex;align-items:center;justify-content:space-between;gap:10px"><b style="word-break:break-all">circle.app/join/MWA-4X7K</b><button class="cp" data-a="copy:Invite link copied">'+ic("copy",16)+'Copy</button></div><button class="btn" data-a="share">Share on WhatsApp</button><button class="btn ol" style="margin-top:10px" data-a="done">Back to home</button></div>';
+ var h='<div class="pad" style="padding-top:calc(22px + env(safe-area-inset-top,0px))"><h1>'+(s===1?"Start a circle":s===2?"Payout order":"Check and create")+'</h1><p class="mute" style="margin:6px 0 0">Step '+s+' of 3</p></div><div class="steps">'+[1,2,3].map(function(i){return '<i class="'+(i<=s?"on":"")+'"></i>'}).join("")+'</div><div class="pad">';
+ if(s===1)h+='<label for="cn">Circle name</label><input id="cn" value="'+c.name+'"><label>Each person pays, monthly</label><div class="chips">'+[5000,10000,20000,50000,100000].map(function(v){return '<button data-a="amt:'+v+'" aria-pressed="'+(c.amt===v)+'">'+N(v)+'</button>'}).join("")+'</div><label>People in the circle</label><div class="chips">'+[4,5,6,8,10,12].map(function(v){return '<button data-a="n:'+v+'" aria-pressed="'+(c.n===v)+'">'+v+'</button>'}).join("")+'</div><div class="card" style="margin:22px 0 0;background:var(--okb);color:var(--ok);font-weight:600;font-size:15px">Each round the pot is '+N(c.amt*(c.n-1))+'. It runs for '+c.n+' months.</div>';
+ else if(s===2){if(c.order.length!==c.n)c.order=["You"].concat(Array.apply(null,Array(c.n-1)).map(function(_,i){return "Member "+(i+2)}));
+  h+='<p class="mute" style="margin:18px 0 8px">Members take their place in this order as they join. You can swap places until the circle starts.</p><div class="card" style="margin:0;padding:6px 18px">'+c.order.map(function(n,i){return '<div class="row"><span class="num '+(i===0?"now":"")+'">'+(i+1)+'</span><span class="nm">'+n+'</span><span class="mv"><button data-a="mv:'+i+':-1" aria-label="Move up" '+(i===0?"disabled":"")+'>'+ic("up",18)+'</button><button data-a="mv:'+i+':1" aria-label="Move down" '+(i===c.n-1?"disabled":"")+'>'+ic("dn",18)+'</button></span></div>'}).join("")+'</div>'}
+ else h+='<div class="card" style="margin:20px 0 0;padding:6px 18px">'+[["Name",c.name],["Each person pays",N(c.amt)+" monthly"],["Members",c.n+" people"],["Pot each round",N(c.amt*(c.n-1))],["Your turn","Round 1"]].map(function(r){return '<div class="row"><span class="nm mute" style="font-weight:500">'+r[0]+'</span><b>'+r[1]+'</b></div>'}).join("")+'</div><p class="mute" style="font-size:14px;margin:14px 0 0">Money moves between members in their bank apps. Circle only keeps the record.</p>';
+ h+='<div style="display:flex;gap:10px;margin-top:24px">'+(s>1?'<button class="btn ol" style="flex:1" data-a="step:-1">Back</button>':'')+'<button class="btn" style="flex:2" data-a="'+(s===3?"mk":"step:1")+'">'+(s===3?"Create circle":"Continue")+'</button></div></div>';return h}
+/* me */
+function me(){var ch=S.me==="Chioma";
+ return '<div class="hero" style="padding-bottom:26px"><div class="bar"><span class="lg" style="font-size:18px">'+mark()+'Circle</span></div><div style="display:flex;align-items:center;gap:14px">'+av(S.me).replace('class="av','style="width:58px;height:58px;font-size:22px" class="av')+'<div><h2 style="font-size:24px">'+(ch?"Chioma Okafor":"Emeka Nwosu")+'</h2><div style="opacity:.75;font-size:14.5px">0803 123 4567</div></div></div></div>'+
+ '<div class="card up" style="padding:20px"><div class="score" style="color:#fff;margin:-38px -18px -18px;padding:20px 18px;background:var(--hero);border-radius:20px"><div class="sc"><span>92</span></div><div><b style="font-size:18px">Very reliable</b><p style="margin:3px 0 0;font-size:14px;opacity:.78">You paid on time in 11 of 12 rounds. The one late payment was 2 days, in May.</p></div></div></div>'+
+ '<div class="card" style="margin-top:12px"><div class="stats"><div><b>3</b><small>Circles</small></div><div><b>11/12</b><small>On time</small></div><div><b>1</b><small>Late</small></div></div></div>'+
+ '<div class="card" style="padding:4px 18px"><button class="menu" data-a="toast:Open Telegram to link"><span>Reminders on Telegram<br><small>Not connected</small></span><span class="chip ok" style="flex:none">Connect</span></button><button class="menu" data-a="toast:Demo only"><span>Account for receiving<br><small>GTBank ···· 6789</small></span>'+ic("chev",18)+'</button><button class="menu" data-a="toast:Demo only"><span>Notifications</span>'+ic("chev",18)+'</button><button class="menu" data-a="toast:Demo only"><span>Help and support</span>'+ic("chev",18)+'</button><button class="menu" style="color:var(--bad)" data-a="go:welcome"><span>Sign out</span></button></div>'+
+ '<div class="sec" style="margin-bottom:8px"><b style="font-size:14px" class="mute">Prototype only</b></div><div class="seg" style="margin-top:0" role="group" aria-label="Preview as"><button data-a="as:Emeka" aria-pressed="'+!ch+'">Preview as member</button><button data-a="as:Chioma" aria-pressed="'+ch+'">Preview as recipient</button></div>'}
+function sheet(){var s=S.sheet;
+ if(s==="pay")return '<div class="sh"><h2>Pay Chioma '+N(AMT)+'</h2><p class="mute" style="margin:6px 0 0">Send exactly this amount from your bank app.</p><div class="bank">'+[["Bank","GTBank"],["Account number","0123456789"],["Account name","Chioma Okafor"]].map(function(r,i){return '<div class="row"><div><small>'+r[0]+'</small><b>'+r[1]+'</b></div>'+(i===1?'<button class="cp" data-a="copy:Account number copied">'+ic("copy",16)+'Copy</button>':'')+'</div>'}).join("")+'</div><button class="btn" data-a="paid">I’ve paid</button><button class="btn ol" style="margin-top:10px" data-a="sheetx">Not yet</button></div>';
+ if(s&&s.indexOf("dsp:")===0)return '<div class="sh"><h2>Didn’t get '+N(AMT)+' from '+s.slice(4)+'?</h2><p style="margin:10px 0 0">'+s.slice(4)+' marked '+N(AMT)+' as paid today at 9:12am. You haven’t confirmed it. Check your bank app, including pending transfers.</p><p class="ai">Summary written by AI from the circle’s record.</p><button class="btn bd" data-a="dsend">Open a dispute</button><button class="btn ol" style="margin-top:10px" data-a="sheetx">Go back</button></div>';return ""}
+function R(top){var v=S.v,h,nav=false;
+ if(v==="welcome")h=welcome();else if(v==="su")h=signup();else if(v==="si")h=signin();else if(v==="otp")h=otp();
+ else if(S.circle)h=detail();else{nav=true;h=S.tab==="home"?home():S.tab==="act"?activity():S.tab==="new"?create():me()}
+ var sc=$("scr");sc.innerHTML=h;if(top)sc.scrollTop=0;
+ var n=$("nav");n.style.display=nav?"flex":"none";n.innerHTML=nav?[["home","Home","home"],["act","Activity","act"],["new","Start","plus"],["me","Me","user"]].map(function(t){return '<button data-a="tab:'+t[0]+'"'+(S.tab===t[0]?' aria-current="page"':'')+'>'+ic(t[2],24)+t[1]+'</button>'}).join(""):"";
+ var sh=$("sheet");sh.innerHTML=sheet();sh.style.display=S.sheet?"flex":"none"}
+function say(m){var t=$("toast");t.innerHTML='<div>'+m+'</div>';clearTimeout(say.t);say.t=setTimeout(function(){t.innerHTML=""},2400)}
+function ph(v){var d=v.replace(/\D/g,"").replace(/^234/,"").replace(/^0/,"");return d.length===10?d:null}
+function er(m){$("er").textContent=m;return false}
+document.addEventListener("input",function(e){if(e.target.id==="cn")S.c.name=e.target.value||"My circle"});
+document.addEventListener("click",function(e){
+ var b=e.target.closest("[data-a]");if(e.target.closest("#sheet")&&!b){if(e.target.id==="sheet"){S.sheet=null;R()}return}
+ if(!b)return;var p=b.dataset.a.split(":"),a=p[0],x=p[1];
+ if(a==="go"){S.v=x;S.circle=0;return R(1)}
+ if(a==="tab"){S.tab=x;S.circle=0;S.step=1;return R(1)}
+ if(a==="open"){S.circle=1;S.ct="m";return R(1)}
+ if(a==="close"){S.circle=0;return R(1)}
+ if(a==="ct"){S.ct=x;return R()}
+ if(a==="pay"){S.sheet="pay";return R()}
+ if(a==="sheetx"){S.sheet=null;return R()}
+ if(a==="paid"){you().s="wait";you().d="Marked paid just now";S.A.unshift(["You marked ₦50,000 as paid","Family Ajo · Just now","wait"]);S.sheet=null;R();return say("Marked as paid. Chioma has been told.")}
+ if(a==="rcv"){var m=S.M.find(function(z){return z.n===x});m.s="ok";m.d="Confirmed just now";S.A.unshift([x+"’s payment was confirmed","Family Ajo · Just now","ok"]);R();return say("Confirmed. "+x+" is paid up.")}
+ if(a==="dsp"){S.sheet="dsp:"+x;return R()}
+ if(a==="dsend"){S.sheet=null;R();return say("Dispute opened. Both of you can add proof.")}
+ if(a==="copy"){return say(x)}
+ if(a==="toast"){return say(x)}
+ if(a==="as"){S.me=x;return R()}
+ if(a==="su"){var nm=$("n").value.trim(),pp=ph($("p").value);if(nm.split(/\s+/).length<2)return er("Enter your first and last name.");if(!pp)return er("Enter a valid Nigerian number, like 0803 123 4567.");if($("w").value.length<8)return er("Password must be at least 8 characters.");S.ph="+234 "+pp;S.v="otp";return R(1)}
+ if(a==="si"){if(!$("i").value.trim())return er("Enter your phone number or email.");if(!$("w").value)return er("Enter your password.");S.v="app";S.tab="home";return R(1)}
+ if(a==="otp"){if($("o").value.length<6)return er("Enter all 6 digits.");S.v="app";S.tab="home";R(1);return say("Account created. Welcome to Circle.")}
+ if(a==="amt"){S.c.amt=+x;return R()}
+ if(a==="n"){S.c.n=+x;S.c.order=[];return R()}
+ if(a==="step"){S.step=Math.max(1,Math.min(3,S.step+ +x));return R(1)}
+ if(a==="mv"){var i=+x,d=+p[2],o=S.c.order,j=i+d;if(j<0||j>=o.length)return;var t=o[i];o[i]=o[j];o[j]=t;return R()}
+ if(a==="mk"){S.step=4;return R(1)}
+ if(a==="share"){return say("Opening WhatsApp…")}
+ if(a==="done"){S.mine.push({name:S.c.name,amt:S.c.amt,n:S.c.n});S.step=1;S.tab="home";S.c.order=[];return R(1)}
+});
+R(1);
+</script>
+</body>
+</html>
