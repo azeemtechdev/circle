@@ -1,3 +1,4 @@
+import type { PayoutAccount } from '@/lib/payout';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 
 /**
@@ -122,6 +123,23 @@ export async function listContributions(roundId: string): Promise<RoundContribut
 
   if (error) throw new Error(`Could not load who has paid: ${error.message}`);
   return (data ?? []) as RoundContribution[];
+}
+
+/**
+ * Where someone wants to be paid, or null if they have not said — or if RLS
+ * hides it because you have not both joined a circle together (migration
+ * 0010). The screen treats both the same: "ask them in the group".
+ */
+export async function getPayoutAccount(userId: string): Promise<PayoutAccount | null> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from('payout_accounts')
+    .select('*')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error) throw new Error(`Could not load the account details: ${error.message}`);
+  return (data as PayoutAccount | null) ?? null;
 }
 
 /**

@@ -74,6 +74,7 @@ These are the rules that make this project resume-worthy. Every one gets automat
 ## 5. Data Model (overview — full ERD in ARCHITECTURE.md)
 
 - `users` — Supabase auth + profile (name, phone, telegram_chat_id)
+- `payout_accounts` — where a member wants to be paid: bank name, 10-digit account number, account name (owner-typed, not verified). Readable only by people who have joined a circle with you; writable only by you.
 - `circles` — name, amount_kobo, period_days, status, created_by
 - `memberships` — user ↔ circle, payout_position (rotation order), status
 - `rounds` — circle_id, round_number, recipient_membership_id, due_date, status
@@ -129,6 +130,7 @@ These are the rules that make this project resume-worthy. Every one gets automat
 ### Phase 3 — PWA screens (Weeks 4–5)
 - Auth (Supabase), create circle, invite via link/phone, circle dashboard (who's paid, whose turn, countdown), "I've paid" / "Received" buttons, history view
 - Design for the least technical relative: big buttons, no jargon, works on low-end Android
+- Payout account details (added 2026-10-21): each member enters their bank details once; the pay screen shows the current recipient's details with a copy button, tells the payer to check the account name in their bank app, and warns when the details changed in the last 7 days. If the recipient has not entered any, the screen says so — nothing blocks. Circle still never moves money.
 - **Accept:** a non-technical tester completes a fake round without help.
 
 ### Phase 4 — Notifications: Telegram bot + email/push (Week 6)
@@ -145,6 +147,7 @@ These are the rules that make this project resume-worthy. Every one gets automat
 ### Phase 6 — Disputes + dispute assistant (Week 9)
 - Dispute open/resolve flow; AI-drafted neutral summary from ledger + events
 - Add dispute cases to eval set
+- TODO (from Phase 3 restyle): the "Not received" sheet already exists with a disabled "Open a dispute" button and a no-fake-summary placeholder. Wire it to a real `open_dispute` transition + route (idempotency key, replay test) and the AI summary with its non-LLM fallback.
 - **Accept:** mismatched claim (paid, not received) → dispute with a factually correct AI summary citing ledger data.
 
 ### Phase 7 — Trust score v1 + polish (Week 10)
