@@ -1,53 +1,58 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useState } from 'react';
 
 import { signIn } from '@/lib/auth/actions';
 import { EMPTY_AUTH_STATE } from '@/lib/auth/form-state';
 
+/**
+ * Email and password — the only sign-in Circle's Supabase Auth setup has.
+ *
+ * No "forgot password" link: there is no reset flow yet, and a link that leads
+ * nowhere is worse than none.
+ */
 export function LoginForm({ next }: { next: string }) {
   const [state, action, pending] = useActionState(signIn, EMPTY_AUTH_STATE);
+  // Kept across a failed attempt; retyping an email on a phone keyboard
+  // because of a password typo is the kind of friction people quit over.
+  const [email, setEmail] = useState('');
 
   return (
-    <form action={action} className="flex flex-col gap-4">
+    <form action={action}>
       <input type="hidden" name="next" value={next} />
 
-      <label className="flex flex-col gap-1">
-        <span className="text-sm font-medium">Email</span>
+      <label className="field">
+        <span>Email</span>
         <input
+          className="input"
           name="email"
           type="email"
+          inputMode="email"
           autoComplete="email"
           required
-          // inputMode and autoComplete matter more than they look: this is used
-          // on a cheap Android keyboard, one-handed, often on mobile data.
-          inputMode="email"
-          className="rounded-lg border border-black/20 px-3 py-3 text-base dark:border-white/25"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
         />
       </label>
 
-      <label className="flex flex-col gap-1">
-        <span className="text-sm font-medium">Password</span>
+      <label className="field">
+        <span>Password</span>
         <input
+          className="input"
           name="password"
           type="password"
           autoComplete="current-password"
           required
-          className="rounded-lg border border-black/20 px-3 py-3 text-base dark:border-white/25"
         />
       </label>
 
       {state.error ? (
-        <p role="alert" className="text-sm text-red-700 dark:text-red-400">
+        <p role="alert" className="alert">
           {state.error}
         </p>
       ) : null}
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="rounded-lg bg-foreground px-4 py-3 text-base font-medium text-background disabled:opacity-60"
-      >
+      <button type="submit" className="btn" disabled={pending} style={{ marginTop: 22 }}>
         {pending ? 'Signing in…' : 'Sign in'}
       </button>
     </form>

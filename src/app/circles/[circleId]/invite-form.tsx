@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useRef, useState } from 'react';
 
+import { useToast } from '@/components/ui/toast';
 import { callTransition, newIdempotencyKey, TransitionError } from '@/lib/http/client';
 import { createSupabaseBrowserClient } from '@/lib/supabase/browser';
 
@@ -36,6 +37,7 @@ export function InviteForm({
   memberUserIds: string[];
 }) {
   const router = useRouter();
+  const toast = useToast();
   const [phone, setPhone] = useState('');
   const [found, setFound] = useState<Found | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -110,6 +112,7 @@ export function InviteForm({
         keyRef.current,
       );
       keyRef.current = null;
+      toast(`${found.display_name} is invited.`);
       setFound(null);
       setPhone('');
       router.refresh();
@@ -121,48 +124,52 @@ export function InviteForm({
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      <form onSubmit={lookUp} className="flex flex-col gap-2">
-        <label className="flex flex-col gap-1">
-          <span className="text-sm font-medium">Invite by phone number</span>
+    <div>
+      <form onSubmit={lookUp}>
+        <label className="field">
+          <span style={{ marginTop: 0 }}>Invite by phone number</span>
           <input
+            className="input"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             type="tel"
             inputMode="tel"
+            autoComplete="off"
             required
             placeholder="0803 123 4567"
-            className="rounded-lg border border-black/20 px-3 py-3 text-base dark:border-white/25"
           />
+          <small>They will receive in round {nextPosition}.</small>
         </label>
         <button
           type="submit"
+          className="btn btn--outline"
           disabled={pending}
-          className="rounded-lg border border-black/20 px-4 py-3 text-base font-medium disabled:opacity-60 dark:border-white/25"
+          aria-busy={pending && !found}
+          style={{ marginTop: 12 }}
         >
-          {pending ? 'Looking…' : 'Find this person'}
+          {pending && !found ? 'Looking…' : 'Find this person'}
         </button>
       </form>
 
       {found ? (
-        <div className="rounded-lg border border-black/15 p-3 dark:border-white/20">
-          <p className="text-sm">
-            Invite <span className="font-medium">{found.display_name}</span> as person{' '}
-            {nextPosition} in the rotation?
-          </p>
-          <div className="mt-2 flex gap-2">
+        <div className="card card--flush card--ok" style={{ marginTop: 12 }}>
+          <b className="title">Invite {found.display_name}?</b>
+          <p>Check this is the person you mean. They will receive in round {nextPosition}.</p>
+          <div className="btn-row" style={{ marginTop: 12 }}>
             <button
               type="button"
+              className="btn btn--small"
               onClick={invite}
               disabled={pending}
-              className="rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background disabled:opacity-60"
+              aria-busy={pending}
             >
               {pending ? 'Inviting…' : 'Yes, invite'}
             </button>
             <button
               type="button"
+              className="btn btn--outline btn--small"
               onClick={() => setFound(null)}
-              className="rounded-lg border border-black/20 px-4 py-2 text-sm dark:border-white/25"
+              disabled={pending}
             >
               No
             </button>
@@ -171,7 +178,7 @@ export function InviteForm({
       ) : null}
 
       {error ? (
-        <p role="alert" className="text-sm text-red-700 dark:text-red-400">
+        <p role="alert" className="alert">
           {error}
         </p>
       ) : null}

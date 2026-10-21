@@ -1,87 +1,125 @@
 'use client';
 
-import { useActionState } from 'react';
+import Link from 'next/link';
+import { useActionState, useState } from 'react';
 
+import { Icon } from '@/components/ui/icon';
 import { signUp } from '@/lib/auth/actions';
 import { EMPTY_AUTH_STATE } from '@/lib/auth/form-state';
 
+/**
+ * Email and password, through Supabase Auth (src/lib/auth/actions.ts).
+ *
+ * The design showed a phone number and an SMS code. Circle's auth is email +
+ * password: SMS codes need a paid SMS provider, which the $0 stack does not
+ * have. The phone is still asked for here, because invites find people by it.
+ *
+ * When the project requires email confirmation, Supabase returns no session
+ * and signUp answers with a notice; that becomes the "check your email"
+ * screen below rather than a line of green text under the form.
+ */
 export function SignupForm() {
   const [state, action, pending] = useActionState(signUp, EMPTY_AUTH_STATE);
+  // Controlled, so a failed attempt does not wipe what was typed (React resets
+  // uncontrolled fields after a form action), and so the confirmation screen
+  // can name the address the email went to.
+  const [displayName, setDisplayName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+
+  if (state.notice) {
+    return (
+      <div className="done" style={{ padding: '24px 0 0' }}>
+        <div className="tick">
+          <Icon name="check" size={42} />
+        </div>
+        <h1>Check your email</h1>
+        <p className="mute" style={{ margin: '10px 0 22px' }}>
+          We sent a link to <b style={{ color: 'var(--ink)' }}>{email}</b>. Open it on this phone to
+          confirm your account, then sign in.
+        </p>
+        <Link href="/login" className="btn">
+          Go to sign in
+        </Link>
+        <p className="mute small" style={{ marginTop: 16 }}>
+          No email after a few minutes? Check your spam folder.
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <form action={action} className="flex flex-col gap-4">
-      <label className="flex flex-col gap-1">
-        <span className="text-sm font-medium">Your name</span>
+    <form action={action}>
+      <h1>Create your account</h1>
+      <p className="mute" style={{ margin: '8px 0 0' }}>
+        Takes a minute. Then start a circle or join one.
+      </p>
+
+      <label className="field">
+        <span>Full name</span>
         <input
+          className="input"
           name="displayName"
-          type="text"
           autoComplete="name"
           required
-          className="rounded-lg border border-black/20 px-3 py-3 text-base dark:border-white/25"
+          value={displayName}
+          onChange={(e) => setDisplayName(e.target.value)}
         />
-        <span className="text-xs opacity-70">This is what the others in your circle will see.</span>
+        <small>What the others in your circle will see.</small>
       </label>
 
-      <label className="flex flex-col gap-1">
-        <span className="text-sm font-medium">Phone number</span>
+      <label className="field">
+        <span>Phone number</span>
         <input
+          className="input"
           name="phone"
           type="tel"
-          autoComplete="tel"
           inputMode="tel"
+          autoComplete="tel"
           placeholder="0803 123 4567"
-          className="rounded-lg border border-black/20 px-3 py-3 text-base dark:border-white/25"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
         />
-        {/* Not required by the form, but without it nobody can invite you:
-            invites are looked up by phone. Saying so is better than a silent
-            dead end later. */}
-        <span className="text-xs opacity-70">
-          How your friends find you to invite you. You can add it later.
-        </span>
+        {/* Not required, but without it nobody can invite you: invites look
+            people up by phone. Saying so beats a silent dead end later. */}
+        <small>How friends find you to invite you. You can add it later.</small>
       </label>
 
-      <label className="flex flex-col gap-1">
-        <span className="text-sm font-medium">Email</span>
+      <label className="field">
+        <span>Email</span>
         <input
+          className="input"
           name="email"
           type="email"
-          autoComplete="email"
           inputMode="email"
+          autoComplete="email"
           required
-          className="rounded-lg border border-black/20 px-3 py-3 text-base dark:border-white/25"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
         />
       </label>
 
-      <label className="flex flex-col gap-1">
-        <span className="text-sm font-medium">Password</span>
+      <label className="field">
+        <span>Password</span>
         <input
+          className="input"
           name="password"
           type="password"
           autoComplete="new-password"
           minLength={8}
           required
-          className="rounded-lg border border-black/20 px-3 py-3 text-base dark:border-white/25"
         />
-        <span className="text-xs opacity-70">At least 8 characters.</span>
+        <small>At least 8 characters.</small>
       </label>
 
       {state.error ? (
-        <p role="alert" className="text-sm text-red-700 dark:text-red-400">
+        <p role="alert" className="alert">
           {state.error}
         </p>
       ) : null}
-      {state.notice ? (
-        <p role="status" className="text-sm text-green-800 dark:text-green-400">
-          {state.notice}
-        </p>
-      ) : null}
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="rounded-lg bg-foreground px-4 py-3 text-base font-medium text-background disabled:opacity-60"
-      >
-        {pending ? 'Creating your account…' : 'Create account'}
+      <button type="submit" className="btn" disabled={pending} style={{ marginTop: 22 }}>
+        {pending ? 'Creating your account…' : 'Continue'}
       </button>
     </form>
   );

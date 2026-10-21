@@ -1,5 +1,7 @@
 import Link from 'next/link';
 
+import { BackLink } from '@/components/ui/back-link';
+
 import { LoginForm } from './login-form';
 
 export default async function LoginPage({ searchParams }: PageProps<'/login'>) {
@@ -9,20 +11,25 @@ export default async function LoginPage({ searchParams }: PageProps<'/login'>) {
   const next = typeof raw === 'string' ? raw : '/dashboard';
 
   return (
-    <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-6 p-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Sign in</h1>
-        <p className="mt-1 text-sm opacity-70">Welcome back to your circle.</p>
+    <>
+      <div className="top-bar">
+        <BackLink href="/" />
       </div>
+      <div className="auth">
+        <h1>Welcome back</h1>
+        <p className="mute" style={{ margin: '8px 0 0' }}>
+          Sign in to see your circles.
+        </p>
 
-      <LoginForm next={next} />
+        <LoginForm next={next} />
 
-      <p className="text-sm">
-        No account yet?{' '}
-        <Link href="/signup" className="underline underline-offset-4">
-          Create one
-        </Link>
-      </p>
-    </main>
+        <p className="mute" style={{ textAlign: 'center', margin: '20px 0 0' }}>
+          New here?{' '}
+          <Link href="/signup" className="link">
+            Create an account
+          </Link>
+        </p>
+      </div>
+    </>
   );
 }

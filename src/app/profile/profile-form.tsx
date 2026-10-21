@@ -1,65 +1,64 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useState } from 'react';
 
 import { EMPTY_AUTH_STATE } from '@/lib/auth/form-state';
 import { updateProfile } from '@/lib/auth/profile-actions';
 
 export function ProfileForm({
-  displayName,
-  phone,
+  displayName: initialName,
+  phone: initialPhone,
 }: {
   displayName: string;
   phone: string;
 }) {
   const [state, action, pending] = useActionState(updateProfile, EMPTY_AUTH_STATE);
+  // Controlled so a failed save keeps what was typed.
+  const [displayName, setDisplayName] = useState(initialName);
+  const [phone, setPhone] = useState(initialPhone);
 
   return (
-    <form action={action} className="flex flex-col gap-4">
-      <label className="flex flex-col gap-1">
-        <span className="text-sm font-medium">Your name</span>
+    <form action={action} style={{ paddingBottom: 6 }}>
+      <label className="field">
+        <span>Your name</span>
         <input
+          className="input"
           name="displayName"
-          defaultValue={displayName}
+          value={displayName}
+          onChange={(e) => setDisplayName(e.target.value)}
           required
           autoComplete="name"
-          className="rounded-lg border border-black/20 px-3 py-3 text-base dark:border-white/25"
         />
-        <span className="text-xs opacity-70">What the others in your circle see.</span>
+        <small>What the others in your circle see.</small>
       </label>
 
-      <label className="flex flex-col gap-1">
-        <span className="text-sm font-medium">Phone number</span>
+      <label className="field">
+        <span>Phone number</span>
         <input
+          className="input"
           name="phone"
-          defaultValue={phone}
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
           type="tel"
           inputMode="tel"
           autoComplete="tel"
           placeholder="0803 123 4567"
-          className="rounded-lg border border-black/20 px-3 py-3 text-base dark:border-white/25"
         />
-        <span className="text-xs opacity-70">
-          How friends find you to invite you. 0803… and +234803… are the same number.
-        </span>
+        <small>How friends find you to invite you. 0803… and +234803… are the same number.</small>
       </label>
 
       {state.error ? (
-        <p role="alert" className="text-sm text-red-700 dark:text-red-400">
+        <p role="alert" className="alert">
           {state.error}
         </p>
       ) : null}
       {state.notice ? (
-        <p role="status" className="text-sm text-green-800 dark:text-green-400">
+        <p role="status" className="notice">
           {state.notice}
         </p>
       ) : null}
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="rounded-lg bg-foreground px-4 py-3 text-base font-medium text-background disabled:opacity-60"
-      >
+      <button type="submit" className="btn" disabled={pending} style={{ marginTop: 16 }}>
         {pending ? 'Saving…' : 'Save'}
       </button>
     </form>

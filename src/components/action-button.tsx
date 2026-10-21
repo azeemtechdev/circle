@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useRef, useState } from 'react';
 
+import { useToast } from '@/components/ui/toast';
 import { callTransition, newIdempotencyKey, TransitionError } from '@/lib/http/client';
 
 /**
@@ -17,6 +18,9 @@ import { callTransition, newIdempotencyKey, TransitionError } from '@/lib/http/c
  *
  * The key is only cleared after a success, so the next deliberate action gets a
  * fresh one.
+ *
+ * While a request is in flight the button is disabled and says what it is
+ * doing; a failure stays on screen under the button until the next press.
  */
 export function ActionButton({
   path,
@@ -25,6 +29,9 @@ export function ActionButton({
   pendingLabel,
   confirm,
   variant = 'primary',
+  small = false,
+  successMessage,
+  onDone,
 }: {
   path: string;
   body: Record<string, unknown>;
@@ -32,9 +39,15 @@ export function ActionButton({
   pendingLabel?: string;
   /** Shown in a confirm() first. Use for anything a person cannot undo. */
   confirm?: string;
-  variant?: 'primary' | 'secondary' | 'danger';
+  variant?: 'primary' | 'lime' | 'ghost' | 'outline' | 'danger';
+  small?: boolean;
+  /** A short toast once the server has accepted it. */
+  successMessage?: string;
+  /** Runs after success, e.g. to close the sheet the button sits in. */
+  onDone?: () => void;
 }) {
   const router = useRouter();
+  const toast = useToast();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const keyRef = useRef<string | null>(null);
@@ -50,6 +63,8 @@ export function ActionButton({
     try {
       await callTransition(path, body, keyRef.current);
       keyRef.current = null;
+      if (successMessage) toast(successMessage);
+      onDone?.();
       // Re-renders the server components, so the new state comes from the
       // database rather than from optimistic local state that could disagree
       // with it.
@@ -63,27 +78,30 @@ export function ActionButton({
     }
   }
 
+  const className = [
+    'btn',
+    variant === 'primary' ? '' : `btn--${variant}`,
+    small ? 'btn--small' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
-    <div className="flex flex-col gap-1">
+    <div>
       <button
         type="button"
         onClick={run}
         disabled={pending}
-        className={`rounded-lg px-4 py-3 text-base font-medium disabled:opacity-60 ${STYLES[variant]}`}
+        aria-busy={pending}
+        className={className}
       >
         {pending ? (pendingLabel ?? 'Working…') : label}
       </button>
       {error ? (
-        <p role="alert" className="text-sm text-red-700 dark:text-red-400">
+        <p role="alert" className="alert">
           {error}
         </p>
       ) : null}
     </div>
   );
 }
-
-const STYLES: Record<string, string> = {
-  primary: 'bg-foreground text-background',
-  secondary: 'border border-black/20 dark:border-white/25',
-  danger: 'border border-red-600/50 text-red-700 dark:text-red-400',
-};
